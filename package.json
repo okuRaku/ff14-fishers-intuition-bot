@@ -8,5 +8,8 @@
   },
   "scripts": {
     "start": "node index.js"
+  },
+  "engines": {
+    "node": "16.x"
   }
 }
