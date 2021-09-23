@@ -1,11 +1,9 @@
 const { Client, Intents, MessageEmbed } = require('discord.js');
-const { token } = require('./config.json');
+//const { token } = require('./config.json');
+const token = process.env.TOKEN
+
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 // const trim = (str, max) => ((str.length > max) ? `${str.slice(0, max - 3)}...` : str);
-
-if('TOKEN' in process.env) {
-    token = process.env.TOKEN
-}
 
 
 // helper function for determining icon url
