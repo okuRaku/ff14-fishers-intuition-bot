@@ -5,5 +5,8 @@
     "discord-api-types": "^0.23.1",
     "discord.js": "^13.1.0",
     "node-fetch": "^3.0.0"
+  },
+  "scripts": {
+    "start": "node index.js"
   }
 }
