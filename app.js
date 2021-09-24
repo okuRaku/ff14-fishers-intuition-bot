@@ -3,12 +3,10 @@ const { Client, Intents, MessageEmbed } = require('discord.js');
 const token = process.env.TOKEN
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-// const trim = (str, max) => ((str.length > max) ? `${str.slice(0, max - 3)}...` : str);
 
 
 // helper function for determining icon url
 // via: https://xivapi.com/docs/Icons
-
 const guessIconUrl = (icon_id) => {
     // first we need to add padding to the icon_id
     if(icon_id.length < 6) {
@@ -49,15 +47,8 @@ client.on('interactionCreate', async interaction => {
         }
         const embed = new MessageEmbed()
             .setColor('#1fa1e0')
-            //.setTitle('Upcoming windows for: **' + fish + '**')
-            // .setURL('https://ff14fish.carbuncleplushy.com/')
             .setAuthor('Upcoming windows for: ' + fish)
             .setThumbnail(guessIconUrl(windows.icon))
-            // .addFields(
-            //     { name: 'Definition', value: trim('def', 1024) },
-            //     { name: 'Example', value: trim('ex', 1024) },
-            //     { name: 'Rating', value: `<t:${(windows.availability[0].start / 1000).toFixed(0)}:F> tumbs down.` },
-            // )
             .setFooter('Based on FFX|V Fish Tracker App by Carbuncle Plushy. Run time: ' + windows.runtime.substring(0, 5) + 'ms')
         
         
@@ -81,11 +72,6 @@ client.on('interactionCreate', async interaction => {
             embeds: [embed]
         });
     }
-    // } else if (commandName === 'server') {
-    // 	await interaction.reply(`Server name: ${interaction.guild.name}\nTotal members: ${interaction.guild.memberCount}`);
-    // } else if (commandName === 'user') {
-    // 	await interaction.reply(`Your tag: ${interaction.user.tag}\nYour id: ${interaction.user.id}`);
-    // }
 });
 
 client.login(token);
