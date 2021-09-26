@@ -38,36 +38,38 @@ client.on('interactionCreate', async interaction => {
         const displayDuration = interaction.options.getBoolean('display_duration') === null? false: interaction.options.getBoolean('display_duration')
 
 
-        let windows = {}
-        try {
-            windows = await fetch('https://ff14-fish-planner.herokuapp.com/windows?format=discord&fish=' + encodeURIComponent(fish)).then(response => response.json());
-        } catch {
-            interaction.editReply('Fish not found... Use exact spelling, with spaces and punctuation')
-            return
-        }
         const embed = new MessageEmbed()
-            .setColor('#1fa1e0')
-            .setAuthor('Upcoming windows for: ' + fish)
-            .setThumbnail(guessIconUrl(windows.icon))
-            .setFooter('Based on FFX|V Fish Tracker App by Carbuncle Plushy. Run time: ' + windows.runtime.substring(0, 5) + 'ms')
-        
-        
-            const availabilities = windows.availability.slice(0, numWindows)
-            let windowStrings
-            if(compactMode) {
-                windowStrings = availabilities.map(a => (a.start - Date.now() < 8.64e+7?`<t:${(a.start / 1000).toFixed(0)}:R>`:`<t:${(a.start / 1000).toFixed(0)}:d> <t:${(a.start / 1000).toFixed(0)}:t>`)+ `${displayDuration? ' ('+ a.duration + ')': ''}${displayDowntime? '; ' + a.downtime:''}`)
-                embed.addField('Next Window Start'+(displayDuration?' (Duration)': '') + (displayDowntime?'; Downtime':''), windowStrings.join('\n'), true)
-            } else {
-                windowStrings = availabilities.map(a => `<t:${(a.start / 1000).toFixed(0)}:${(a.start - Date.now() < 8.64e+7)?'R':'D'}>`)  //shows relative time under 24h
-                embed.addField('Next Start', windowStrings.join('\n'), true)
-                if(displayDuration) {
-                    embed.addField('Duration', availabilities.map(a => `${a.duration}`).join('\n'), true)
+        try {
+            const windows = await fetch('https://ff14-fish-planner.herokuapp.com/windows?format=discord&fish=' + encodeURIComponent(fish)).then(response => response.json());
+            embed.setColor('#1fa1e0')
+                .setAuthor('Upcoming windows for: ' + fish)
+                .setThumbnail(guessIconUrl(windows.icon))
+                .setFooter('Based on FFX|V Fish Tracker App by Carbuncle Plushy. Run time: ' + windows.runtime.substring(0, 5) + 'ms')            
+                const availabilities = windows.availability.slice(0, numWindows)
+                let windowStrings
+                if(compactMode) {
+                    windowStrings = availabilities.map(a => (a.start - Date.now() < 8.64e+7?`<t:${(a.start / 1000).toFixed(0)}:R>`:`<t:${(a.start / 1000).toFixed(0)}:d> <t:${(a.start / 1000).toFixed(0)}:t>`)+ `${displayDuration? ' ('+ a.duration + ')': ''}${displayDowntime? '; ' + a.downtime:''}`)
+                    embed.addField('Next Window Start'+(displayDuration?' (Duration)': '') + (displayDowntime?'; Downtime':''), windowStrings.join('\n'), true)
+                } else {
+                    windowStrings = availabilities.map(a => `<t:${(a.start / 1000).toFixed(0)}:${(a.start - Date.now() < 8.64e+7)?'R':'D'}>`)  //shows relative time under 24h
+                    embed.addField('Next Start', windowStrings.join('\n'), true)
+                    if(displayDuration) {
+                        embed.addField('Duration', availabilities.map(a => `${a.duration}`).join('\n'), true)
+                    }
+                    if(displayDowntime) {
+                        embed.addField('Downtime', availabilities.map(a => `${a.downtime || '\u200b'}`).join('\n'), true)
+                    }
+                    
                 }
-                if(displayDowntime) {
-                    embed.addField('Downtime', availabilities.map(a => `${a.downtime || '\u200b'}`).join('\n'), true)
-                }
-                
-            }
+        } catch {
+            embed.setColor('#1fa1e0')
+            .setTitle('Found no windows for: ' + fish)
+            .setThumbnail('https://xivapi.com/i/001000/001135.png')
+            .setFooter('If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417')
+            .setDescription('Please use exact spelling, with spaces and punctuation.  Click the above title link to search Teamcraft for your fish.')    
+            .setURL('https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(fish))
+        }
+        
         interaction.editReply({
             embeds: [embed]
         });
