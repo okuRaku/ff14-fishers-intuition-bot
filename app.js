@@ -39,7 +39,6 @@ client.on('interactionCreate', async interaction => {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isSelectMenu()) return;
 
-    console.log(Object.keys(DATA.SPOTS))
     if (interaction.customId === 'region') {
         const row = new MessageActionRow()
             .addComponents(
@@ -48,7 +47,6 @@ client.on('interactionCreate', async interaction => {
                     .setPlaceholder('Select Zone')
                     // ZONES
                     .addOptions(Object.keys(DATA.SPOTS[interaction.values[0]]).map(key => { 
-                        console.log(key)
                         return {
                             label: key.replace(/(^\w{1})|(\s+\w{1})|(_+\w{1})/g, letter => letter.toUpperCase()),  // hopefully prettier
                             value: key}

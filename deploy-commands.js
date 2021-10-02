@@ -41,7 +41,7 @@ const commands = [
         .addBooleanOption(option => option.setName('display_downtime').setRequired(false).setDescription('Display downtime between windows, varies due to weather randomness.  Default true.'))
         .addBooleanOption(option => option.setName('compact_mode').setRequired(false).setDescription('Compact view more suitable for mobile.  Default true.')),
     new SlashCommandBuilder().setName('bitetimes')
-        .setDescription('Bite timings for a spot.  Based on FFXIV Teamcraft')
+        .setDescription('Bite timings for a fishing spot.  Run without parameters (a menu will be presented).  Based on FFXIV Teamcraft')
 ]
     .map(command => command.toJSON());
 
