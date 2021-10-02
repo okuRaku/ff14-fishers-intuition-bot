@@ -95,30 +95,44 @@ client.on('interactionCreate', async interaction => {
     // Final step
     if (interaction.customId === 'spot') {
         await interaction.deferUpdate();
+        let loadingCounter = 0
+        const loadingInterval = setInterval(async () => {
+            await interaction.editReply({ content: '`Processing'+ '.'.repeat(loadingCounter) + '`', components: [] });
+            loadingCounter = (loadingCounter + 1) % 4
+        },500)
 
         const interactionValue = interaction.values[0].split(';')
-        const bitetimes = await fetch('https://ff14-fishing-plotter.herokuapp.com/bitetimes?spotId=' + interactionValue[1]).then(response => response.json());
-           
+        const embed = new MessageEmbed()
+        let attachment
+        try {
+            const bitetimes = await fetch('https://ff14-fishing-plotter.herokuapp.com/bitetimes?spotId=' + interactionValue[1]).then(response => response.json());
+            clearInterval(loadingInterval);
 
-        // via discordjs documentation
-        const canvas = Canvas.createCanvas(635,274);
-        const context = canvas.getContext('2d');
-        const background = await Canvas.loadImage(bitetimes.plot);
+            // via discordjs documentation
+            const canvas = Canvas.createCanvas(635,274);
+            const context = canvas.getContext('2d');
+            const background = await Canvas.loadImage(bitetimes.plot);
 
-        // This uses the canvas dimensions to stretch the image onto the entire canvas
-        context.drawImage(background, 0, 0, canvas.width, canvas.height);
+            // This uses the canvas dimensions to stretch the image onto the entire canvas
+            context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-        // Use the helpful Attachment class structure to process the file for you
-       const attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
+            // Use the helpful Attachment class structure to process the file for you
+            attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
 
-       const bitetimesEmbed = new MessageEmbed()
-            .setColor('#1fa1e0')
-            .setAuthor('Bite times for fishing spot: ' + interactionValue[0])
-            .setImage('attachment://buffered-image.png')
-            .setFooter('Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime)
-
-        await interaction.followUp({ components: [], embeds: [bitetimesEmbed], files: [attachment] });
-        await interaction.editReply({ content: 'Finished!', components: [] });
+            embed.setColor('#1fa1e0')
+                .setAuthor('Bite times for fishing spot: ' + interactionValue[0])
+                .setImage('attachment://buffered-image.png')
+                .setFooter('Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime)
+        } catch {
+            clearInterval(loadingInterval)
+            embed.setColor('#1fa1e0')
+                .setAuthor('Error retrieving bite times for: ' + interactionValue[0])
+                .setThumbnail('https://xivapi.com/i/001000/001135.png')
+                .setFooter('If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417')
+        }
+    
+        await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
+        await interaction.editReply({ content: '`...Finished!`', components: [] });
     }
 });
 
