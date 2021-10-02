@@ -10,16 +10,16 @@ const DATA = require('./data.js')
 
 // helper function for determining icon url
 // via: https://xivapi.com/docs/Icons
-const guessIconUrl = (icon_id) => {
+const guessIconUrl = (icon_id, hr=false) => {
+    // ensure string
+    icon_id = icon_id.toString()
     // first we need to add padding to the icon_id
     if (icon_id.length < 6) {
         icon_id = icon_id.padStart(6, '0')
     }
-
     // Now we can build the folder from the padded icon_id
     folder_id = icon_id[0] + icon_id[1] + icon_id[2] + '000'
-
-    return 'https://xivapi.com/i/' + folder_id + '/' + icon_id + '_hr1.png'
+    return guess = 'https://xivapi.com/i/' + folder_id + '/' + icon_id + (hr?'_hr1':'') + '.png'
 }
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
@@ -178,9 +178,18 @@ client.on('interactionCreate', async interaction => {
         try {
             const windows = await fetch('https://ff14-fish-planner.herokuapp.com/windows?format=discord&fish=' + encodeURIComponent(fish)).then(response => response.json());
             embed.setColor('#1fa1e0')
-                .setAuthor('Upcoming windows for: ' + fish)
                 .setThumbnail(guessIconUrl(windows.icon))
                 .setFooter('Based on FFX|V Fish Tracker App by Carbuncle Plushy. Run time: ' + windows.runtime.substring(0, 5) + 'ms')
+            if(null != windows.folklore) {
+                embed.setAuthor(
+                        'Upcoming windows for: ' + fish,
+                        'https://xivapi.com/i/026000/026164.png',
+                        'https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(windows.folklore))
+                     .setDescription(windows.folklore)
+            } else {
+                embed.setAuthor(
+                    'Upcoming windows for: ' + fish)
+            }
             const availabilities = windows.availability.slice(0, numWindows)
             let windowStrings
             if (compactMode) {
