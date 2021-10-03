@@ -1,7 +1,10 @@
 # Fisher's Intuition
-This Discord bot acts as a front end to another app (publishing Soon&trade;) that provides upcoming fishing windows in the critically acclaimed MMORPG Final Fantasy XIV.
+This Discord bot acts as a front end to other apps (publishing Soon&trade;), providing information useful to Fishers in the critically acclaimed MMORPG Final Fantasy XIV.
+
+## `/windows`
 
 On a server that the commands have been registered and the bot added, start by simply typing `/windows`.  Five parameters are currently offered, though only fish is required.
+Server component borrows heavily from [FFX|V Fish Tracker App](https://github.com/icykoneko/ff14-fish-tracker-app).
 
 **fish**: String.  Required.  Desired fish, any language, exact spelling with spaces.
 ```
@@ -37,6 +40,11 @@ On a server that the commands have been registered and the bot added, start by s
 
 ![Discord screenshot](screenshot1.png "Screenshot")
 
+## `/bitetimes`
+
+This command does not take any parameters, instead displaying a selection menu to the user.  Server component pulls data from [FFXIV Teamcraft](https://github.com/ffxiv-teamcraft/ffxiv-teamcraft) to generate charts of bite times of fish by fishing spot.
+
+![Demo of /bitetimes](bitetimes.gif "Bitetimes")
 
 
 *FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
