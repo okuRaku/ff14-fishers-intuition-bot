@@ -19,7 +19,7 @@ const guessIconUrl = (icon_id, hr=false) => {
     }
     // Now we can build the folder from the padded icon_id
     folder_id = icon_id[0] + icon_id[1] + icon_id[2] + '000'
-    return guess = 'https://xivapi.com/i/' + folder_id + '/' + icon_id + (hr?'_hr1':'') + '.png'
+    return 'https://xivapi.com/i/' + folder_id + '/' + icon_id + (hr?'_hr1':'') + '.png'
 }
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
@@ -191,7 +191,7 @@ client.on('interactionCreate', async interaction => {
         try {
             const windows = await fetch('https://ff14-fish-planner.herokuapp.com/windows?format=discord&fish=' + encodeURIComponent(fish)).then(response => response.json());
             embed.setColor('#1fa1e0')
-                .setThumbnail(guessIconUrl(windows.icon))
+                .setThumbnail(guessIconUrl(windows.icon, true))
                 .setFooter('Based on FFX|V Fish Tracker App by Carbuncle Plushy. Run time: ' + windows.runtime.substring(0, 5) + 'ms')
             if(null != windows.folklore) {
                 embed.setAuthor(
