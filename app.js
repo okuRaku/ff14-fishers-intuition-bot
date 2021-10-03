@@ -32,14 +32,14 @@ client.on('interactionCreate', async interaction => {
 
     if (interaction.customId === 'cancel') {
         await interaction.deferUpdate();
-        await interaction.editReply({ content: 'Cancelled.', components: [] });
+        await interaction.editReply({ content: '`Cancelled.`', components: [] });
     }
 })
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isSelectMenu()) return;
 
-    if (interaction.customId === 'region') {
+    if (interaction.customId === 'region' && !Array.isArray(DATA.SPOTS[interaction.values[0]])) {
         const row = new MessageActionRow()
             .addComponents(
                 new MessageSelectMenu()
@@ -64,8 +64,18 @@ client.on('interactionCreate', async interaction => {
         await interaction.update({ content: 'Chart bite times for a fishing spot.  Please make a selection:', ephemeral: true, components: [row, buttonRow] });
     }
 
-    if (interaction.customId === 'zone') {
+    // prepare options array to look ahead for singular choice zones
+    let options = []
+    if(interaction.customId === 'zone') {
         const regionKey = Object.keys(DATA.SPOTS).find(searchKey => interaction.values[0] in DATA.SPOTS[searchKey] )
+        options = DATA.SPOTS[regionKey][interaction.values[0]]
+    } else if ( Array.isArray(DATA.SPOTS[interaction.values[0]]) ){
+        options = DATA.SPOTS[interaction.values[0]]
+    }
+
+    // Skip this if there's only one fishing spot in that zone
+    if (options.length != 1 
+        && (interaction.customId === 'zone' || Array.isArray(DATA.SPOTS[interaction.values[0]]))) {
         
         const row = new MessageActionRow()
             .addComponents(
@@ -73,7 +83,7 @@ client.on('interactionCreate', async interaction => {
                     .setCustomId('spot')
                     .setPlaceholder('Select Fishing Spot')
                     // SPOTS
-                    .addOptions(DATA.SPOTS[regionKey][interaction.values[0]].map(spot => { 
+                    .addOptions(options.map(spot => { 
                         return {
                             label: spot[0],
                             value: (spot[0] + ';' + spot[1].toString())
@@ -93,7 +103,7 @@ client.on('interactionCreate', async interaction => {
     }
 
     // Final step
-    if (interaction.customId === 'spot') {
+    if (interaction.customId === 'spot' || options.length === 1) {
         await interaction.deferUpdate();
         let loadingCounter = 0
         const loadingInterval = setInterval(async () => {
@@ -101,7 +111,10 @@ client.on('interactionCreate', async interaction => {
             loadingCounter = (loadingCounter + 1) % 4
         },500)
 
-        const interactionValue = interaction.values[0].split(';')
+        const interactionValue = (
+            (interaction.customId === 'zone' && options.length === 1)?
+            options[0]:
+            interaction.values[0].split(';'))
         const embed = new MessageEmbed()
         let attachment
         try {
