@@ -137,7 +137,8 @@ client.on('interactionCreate', async interaction => {
             attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
 
             embed.setColor('#1fa1e0')
-                .setAuthor('Bite times for fishing spot: ' + interactionValue[0])
+                .setAuthor('Bite times for fishing spot: ' + interactionValue[0],'', 'https://ffxivteamcraft.com/db/en/fishing-spot/' + interactionValue[1])
+                .setDescription('`/bitetimes` executed by <@!' + interaction.member + '>')
                 .setImage('attachment://buffered-image.png')
                 .setFooter('Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime)
         } catch {
