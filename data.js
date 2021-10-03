@@ -344,21 +344,21 @@ module.exports = DATA = {
                 ["The Norvrandt Slope",236]
             ]
         },
-        "the_endeavor": [
-                ["Outer Galadion Bay",237],
-                ["Galadion Spectral Current",238],
-                ["The Southern Strait of Merlthor",239],
-                ["Southern Merlthor Spectral Current",240],
-                ["The Northern Straight of Merlthor",243],
-                ["Northern Merlthor Spectral Current",244],
-                ["Open Rhotano Sea",241],
-                ["Rhotano Spectral Current",242],
-                ["Cieldalaes Margin",246],
-                ["Cieldalaes Spectral Current",247],
-                ["Open Bloodbrine Sea",248],
-                ["Bloodbrine Spectral Current",249],
-                ["Outer Rothlyt Sound",250],
-                ["Rothlyt Spectral Current",251]
-        ]
+        // "the_endeavor": [
+        //         ["Outer Galadion Bay",237],
+        //         ["Galadion Spectral Current",238],
+        //         ["The Southern Strait of Merlthor",239],
+        //         ["Southern Merlthor Spectral Current",240],
+        //         ["The Northern Straight of Merlthor",243],
+        //         ["Northern Merlthor Spectral Current",244],
+        //         ["Open Rhotano Sea",241],
+        //         ["Rhotano Spectral Current",242],
+        //         ["Cieldalaes Margin",246],
+        //         ["Cieldalaes Spectral Current",247],
+        //         ["Open Bloodbrine Sea",248],
+        //         ["Bloodbrine Spectral Current",249],
+        //         ["Outer Rothlyt Sound",250],
+        //         ["Rothlyt Spectral Current",251]
+        // ]
     }
 }
