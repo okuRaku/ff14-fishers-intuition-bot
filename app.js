@@ -22,6 +22,10 @@ const guessIconUrl = (icon_id, hr=false) => {
     return 'https://xivapi.com/i/' + folder_id + '/' + icon_id + (hr?'_hr1':'') + '.png'
 }
 
+const prettifySelectionKey = (keyString) => {
+    return keyString.replace(/(^\w{1})|(\s+\w{1})|(_+\w{1})/g, letter => letter.toUpperCase()).replaceAll('_', ' ')
+}
+
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 client.once('ready', () => {
     console.log('Ready!');
@@ -48,7 +52,7 @@ client.on('interactionCreate', async interaction => {
                     // ZONES
                     .addOptions(Object.keys(DATA.SPOTS[interaction.values[0]]).map(key => { 
                         return {
-                            label: key.replace(/(^\w{1})|(\s+\w{1})|(_+\w{1})/g, letter => letter.toUpperCase()),  // hopefully prettier
+                            label: prettifySelectionKey(key),
                             value: key}
                         })),
             )
@@ -163,7 +167,7 @@ client.on('interactionCreate', async interaction => {
                     // REGION
                     .addOptions(Object.keys(DATA.SPOTS).map(key => { 
                         return {
-                            label: key.replace(/(^\w{1})|(\s+\w{1})|(_+\w{1})/g, letter => letter.toUpperCase()),  // hopefully prettier
+                            label: prettifySelectionKey(key),  
                             value: key}
                         })),
             )
