@@ -32,7 +32,7 @@ const { clientId, guildId, token } = require('./config.json');
 
 
 const commands = [
-    new SlashCommandBuilder().setName('awindows')
+    new SlashCommandBuilder().setName('windows')
         .setDescription(
             'Get upcoming windows for a fish.  Based on FFX|V Fish Tracker App')
         .addStringOption(option => option.setName('fish').setRequired(true).setDescription('Desired fish, any language.'))
@@ -40,7 +40,7 @@ const commands = [
         .addBooleanOption(option => option.setName('display_duration').setRequired(false).setDescription('Display window durations, useful on fish where it can vary.  Default false.'))
         .addBooleanOption(option => option.setName('display_downtime').setRequired(false).setDescription('Display downtime between windows, varies due to weather randomness.  Default true.'))
         .addBooleanOption(option => option.setName('compact_mode').setRequired(false).setDescription('Compact view more suitable for mobile.  Default true.')),
-    new SlashCommandBuilder().setName('abitetimes')
+    new SlashCommandBuilder().setName('bitetimes')
         .setDescription('Bite timings for a spot.  Run without parameters (a menu will appear).  Based on FFXIV Teamcraft')
         .addStringOption(option => option.setName('plot_type').setRequired(false).setDescription('Optionally adjust plot type.').addChoices([['box','box'],['histogram','histogram']]))
 ]
