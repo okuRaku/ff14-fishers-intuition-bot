@@ -42,19 +42,22 @@ client.on('interactionCreate', async interaction => {
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isSelectMenu()) return;
+    // When a select menu interaction is created, we make sure the values parameter (all that gets passed)
+    // carries along any data we need from prior menus.   This is done by having values be a comma separated list
+    const [selectValue, plotType] = interaction.values[0].split(',')    
 
-    if (interaction.customId === 'region' && !Array.isArray(DATA.SPOTS[interaction.values[0]])) {
+    if (interaction.customId === 'region' && !Array.isArray(DATA.SPOTS[selectValue])) {
         const row = new MessageActionRow()
             .addComponents(
                 new MessageSelectMenu()
                     .setCustomId('zone')
                     .setPlaceholder('Select Zone')
                     // ZONES
-                    .addOptions(Object.keys(DATA.SPOTS[interaction.values[0]]).map(key => { 
+                    .addOptions(Object.keys(DATA.SPOTS[selectValue]).map(key => { 
                         return {
                             label: prettifySelectionKey(key),
-                            value: key}
-                        })),
+                            value: [key, plotType].join(',')
+                        }})),
             )
 
         const buttonRow = new MessageActionRow()
@@ -71,15 +74,15 @@ client.on('interactionCreate', async interaction => {
     // prepare options array to look ahead for singular choice zones
     let options = []
     if(interaction.customId === 'zone') {
-        const regionKey = Object.keys(DATA.SPOTS).find(searchKey => interaction.values[0] in DATA.SPOTS[searchKey] )
-        options = DATA.SPOTS[regionKey][interaction.values[0]]
-    } else if ( Array.isArray(DATA.SPOTS[interaction.values[0]]) ){
-        options = DATA.SPOTS[interaction.values[0]]
+        const regionKey = Object.keys(DATA.SPOTS).find(searchKey => selectValue in DATA.SPOTS[searchKey] )
+        options = DATA.SPOTS[regionKey][selectValue]
+    } else if ( Array.isArray(DATA.SPOTS[selectValue]) ){
+        options = DATA.SPOTS[selectValue]
     }
 
     // Skip this if there's only one fishing spot in that zone
     if (options.length != 1 
-        && (interaction.customId === 'zone' || Array.isArray(DATA.SPOTS[interaction.values[0]]))) {
+        && (interaction.customId === 'zone' || Array.isArray(DATA.SPOTS[selectValue]))) {
         
         const row = new MessageActionRow()
             .addComponents(
@@ -90,7 +93,7 @@ client.on('interactionCreate', async interaction => {
                     .addOptions(options.map(spot => { 
                         return {
                             label: spot[0],
-                            value: (spot[0] + ';' + spot[1].toString())
+                            value: [(spot[0] + ';' + spot[1].toString()),plotType].join(',')
                         }})),
 
             )
@@ -118,15 +121,19 @@ client.on('interactionCreate', async interaction => {
         const interactionValue = (
             (interaction.customId === 'zone' && options.length === 1)?
             options[0]:
-            interaction.values[0].split(';'))
+            selectValue.split(';'))
         const embed = new MessageEmbed()
         let attachment
         try {
-            const bitetimes = await fetch('https://ff14-fishing-plotter.herokuapp.com/bitetimes?spotId=' + interactionValue[1]).then(response => response.json());
+            const bitetimes = await fetch('https://ff14-fishing-plotter.herokuapp.com/bitetimes?'  + new URLSearchParams({
+                spotId: interactionValue[1],
+                plotType: plotType || 'box',
+            })).then(response => response.json());
+
             clearInterval(loadingInterval);
 
             // via discordjs documentation
-            const canvas = Canvas.createCanvas(635,274);
+            const canvas = Canvas.createCanvas(614,351);
             const context = canvas.getContext('2d');
             const background = await Canvas.loadImage(bitetimes.plot);
 
@@ -160,6 +167,7 @@ client.on('interactionCreate', async interaction => {
     const { commandName } = interaction;
 
     if (commandName === 'bitetimes') {
+        const plotType = interaction.options.getString('plot_type');
         const row = new MessageActionRow()
             .addComponents(
                 new MessageSelectMenu()
@@ -169,7 +177,7 @@ client.on('interactionCreate', async interaction => {
                     .addOptions(Object.keys(DATA.SPOTS).map(key => { 
                         return {
                             label: prettifySelectionKey(key),  
-                            value: key}
+                            value: [key, plotType].join(',')}
                         })),
             )
         const buttonRow = new MessageActionRow()
