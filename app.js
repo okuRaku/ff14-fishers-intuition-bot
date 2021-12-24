@@ -274,7 +274,7 @@ client.on('interactionCreate', async interaction => {
                 name: charName,
                 server: charServer,
             })).then(response => response.json());
-            const timeline = await fetch('http://localhost:5000/timeline?'  + new URLSearchParams({
+            const timeline = await fetch('https://ff14-fishing-plotter.herokuapp.com/timeline?'  + new URLSearchParams({
                 charId: lodestone.Results[0].ID, // just take the first one, hopefully right
                 achievement: achievement,
             })).then(response => response.json());
