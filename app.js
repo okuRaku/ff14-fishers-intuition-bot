@@ -26,6 +26,14 @@ const prettifySelectionKey = (keyString) => {
     return keyString.replace(/(^\w{1})|(\s+\w{1})|(_+\w{1})/g, letter => letter.toUpperCase()).replaceAll('_', ' ')
 }
 
+const toTitleCase = (phrase) => {
+    return phrase
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+};
+
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 client.once('ready', () => {
     console.log('Ready!');
@@ -208,13 +216,13 @@ client.on('interactionCreate', async interaction => {
                 .setFooter('Based on FFX|V Fish Tracker App by Carbuncle Plushy. Run time: ' + windows.runtime.substring(0, 5) + 'ms')
             if(null != windows.folklore) {
                 embed.setAuthor(
-                        'Upcoming windows for: ' + fish,
+                        'Upcoming windows for: ' + toTitleCase(fish),
                         'https://xivapi.com/i/026000/026164.png',
                         'https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(windows.folklore))
                      .setDescription(windows.folklore)
             } else {
                 embed.setAuthor(
-                    'Upcoming windows for: ' + fish)
+                    'Upcoming windows for: ' + toTitleCase(fish))
             }
             const availabilities = windows.availability.slice(0, numWindows)
             let windowStrings
@@ -244,6 +252,64 @@ client.on('interactionCreate', async interaction => {
         interaction.editReply({
             embeds: [embed]
         });
+    }
+
+    if (commandName === 'timeline') {
+        await interaction.reply({ content: '`Starting...`', ephemeral: true});
+
+        let loadingCounter = 0
+        const loadingInterval = setInterval(async () => {
+            await interaction.editReply({ content: '`Processing'+ '.'.repeat(loadingCounter) + '`', components: [] });
+            loadingCounter = (loadingCounter + 1) % 4
+        },500)
+
+        const charName = interaction.options.getString('character_name');
+        const charServer = interaction.options.getString('server');
+        const achievement = interaction.options.getString('achievement');
+
+        const embed = new MessageEmbed()
+        let attachment
+        try {
+            const lodestone = await fetch('https://xivapi.com/character/search?'  + new URLSearchParams({
+                name: charName,
+                server: charServer,
+            })).then(response => response.json());
+            const timeline = await fetch('http://localhost:5000/timeline?'  + new URLSearchParams({
+                charId: lodestone.Results[0].ID, // just take the first one, hopefully right
+                achievement: achievement,
+            })).then(response => response.json());
+
+            clearInterval(loadingInterval);
+            // via discordjs documentation
+            const canvas = Canvas.createCanvas(614,351);
+            const context = canvas.getContext('2d');
+            const background = await Canvas.loadImage(timeline.plot);
+
+            // This uses the canvas dimensions to stretch the image onto the entire canvas
+            context.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+            // Use the helpful Attachment class structure to process the file for you
+            attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
+
+            embed.setColor('#1fa1e0')
+                //.setTitle(achievement)
+                .setAuthor(
+                    achievement,
+                    timeline.img,
+                    'https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
+                .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **'+ toTitleCase(charName) + ' ('+ toTitleCase(charServer) +')**')
+                .setImage('attachment://buffered-image.png')
+                //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
+                .setThumbnail(lodestone.Results[0].Avatar)
+                .setFooter('Based on public Lodestone data.  Run time: ' + timeline.runtime)
+
+            await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
+            await interaction.editReply({ content: '`...Finished!`', components: [] });
+        } catch(e) {
+            console.log(e)
+            clearInterval(loadingInterval);
+            await interaction.editReply({ content: 'Encountered an error running `/timeline`.  Please double check that the character has the achievement.  If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417', components: [] });
+        }
     }
 });
 

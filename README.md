@@ -46,6 +46,13 @@ This command does not require any parameters, instead displaying a selection men
 
 ![Demo of /bitetimes](bitetimes.gif "Bitetimes")
 
+## `/timeline`
+
+Display a timeseries chart for a given fishing achievement.  Server component reads public data from [FINAL FANTASY XIV, The Lodestone](https://na.finalfantasyxiv.com/lodestone/).
+
+![Demo of /timeline](screenshot2.png "timeline")
+
+
 
 *FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
 FINAL FANTASY XIV © 2010 - 2021 SQUARE ENIX CO., LTD. All Rights Reserved.*

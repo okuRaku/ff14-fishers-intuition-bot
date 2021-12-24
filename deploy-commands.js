@@ -42,7 +42,27 @@ const commands = [
         .addBooleanOption(option => option.setName('compact_mode').setRequired(false).setDescription('Compact view more suitable for mobile.  Default true.')),
     new SlashCommandBuilder().setName('bitetimes')
         .setDescription('Bite timings for a spot.  Run without parameters (a menu will appear).  Based on FFXIV Teamcraft')
-        .addStringOption(option => option.setName('plot_type').setRequired(false).setDescription('Optionally adjust plot type.').addChoices([['box','box'],['histogram','histogram']]))
+        .addStringOption(option => option.setName('plot_type').setRequired(false).setDescription('Optionally adjust plot type.').addChoices([['box','box'],['histogram','histogram']])),
+    new SlashCommandBuilder().setName('timeline')
+        .setDescription('View achievement timeline.')
+        .addStringOption(option => option.setName('character_name').setRequired(true).setDescription('Character name.'))
+        .addStringOption(option => option.setName('server').setRequired(true).setDescription('Character\'s server.'))
+        .addStringOption(option => option.setName('achievement').setRequired(true).setDescription('Achievement to chart.').addChoices([
+            ['Good Things Come to Those Who Bait: La Noscea', 'Good Things Come to Those Who Bait: La Noscea'],
+            ['Good Things Come to Those Who Bait: Black Shroud', 'Good Things Come to Those Who Bait: Black Shroud'],
+            ['Good Things Come to Those Who Bait: Thanalan', 'Good Things Come to Those Who Bait: Thanalan'],
+            ['Baiting <Expansion>','Baiting'],
+            ['I Caught That','I Caught That'],
+            ['The One That Didn\'t Get Away','The One That Didn\'t Get Away'],
+            ['Go Big or Go Home','Go Big or Go Home'],
+            ['Go Big Far from Home','Go Big Far from Home'],
+            ['Skyward Rod','Skyward Rod'],
+            ['Dauntless Treader','Dauntless Treader'],
+            ['Specters of <Location>','Specters of'],
+            ['Denizens of <Location>','Denizens of'],
+            ['On a Boat','On a Boat'],
+            ['No More Fish in the Sea','No More Fish in the Sea']
+        ]))
 ]
     .map(command => command.toJSON());
 
