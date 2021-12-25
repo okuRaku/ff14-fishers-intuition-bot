@@ -255,7 +255,7 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (commandName === 'timeline') {
-        await interaction.reply({ content: '`Starting...`', ephemeral: true});
+        await interaction.reply({ content: '`Starting...`'});
 
         let loadingCounter = 0
         const loadingInterval = setInterval(async () => {
@@ -291,6 +291,10 @@ client.on('interactionCreate', async interaction => {
             // Use the helpful Attachment class structure to process the file for you
             attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
 
+            
+            const reply = await interaction.editReply({ content: '`...Finished!`', components: [], files: (typeof attachment === "undefined" ? [] : [attachment]) });
+
+            const attachmentUrl = reply.attachments.first()?.url ?? ''; 
             embed.setColor('#1fa1e0')
                 //.setTitle(achievement)
                 .setAuthor(
@@ -298,19 +302,19 @@ client.on('interactionCreate', async interaction => {
                     timeline.img,
                     'https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
                 .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **'+ toTitleCase(charName) + ' ('+ toTitleCase(charServer) +')**')
-                .setImage('attachment://buffered-image.png')
+                .setImage(attachmentUrl)
                 //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
                 .setThumbnail(lodestone.Results[0].Avatar)
                 .setFooter('Based on public Lodestone data.  Run time: ' + timeline.runtime)
+
+            await interaction.followUp({ components: [], embeds: [embed] });
+            await interaction.deleteReply()
 
         } catch(e) {
             console.log(e)
             clearInterval(loadingInterval);
             await interaction.editReply({ content: 'Encountered an error running `/timeline`.  Please double check that the character has the achievement.  If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417', components: [] });
         }
-
-        await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
-        await interaction.editReply({ content: '`...Finished!`', components: [] });
     }
 });
 
