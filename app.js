@@ -8,6 +8,8 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 const DATA = require('./data.js')
 
+const wait = require('util').promisify(setTimeout);
+
 // helper function for determining icon url
 // via: https://xivapi.com/docs/Icons
 const guessIconUrl = (icon_id, hr=false) => {
@@ -148,22 +150,22 @@ client.on('interactionCreate', async interaction => {
             // This uses the canvas dimensions to stretch the image onto the entire canvas
             context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-            // Use the helpful Attachment class structure to process the file for you
-            attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
+           // Use the helpful Attachment class structure to process the file for you
+           attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
 
-            embed.setColor('#1fa1e0')
-                .setAuthor('Bite times for fishing spot: ' + interactionValue[0],'', 'https://ffxivteamcraft.com/db/en/fishing-spot/' + interactionValue[1])
-                .setDescription('`/bitetimes` executed by <@!' + interaction.member + '>')
-                .setImage('attachment://buffered-image.png')
-                .setFooter('Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime)
-        } catch {
-            clearInterval(loadingInterval)
-            embed.setColor('#1fa1e0')
-                .setAuthor('Error retrieving bite times for: ' + interactionValue[0])
-                .setThumbnail('https://xivapi.com/i/001000/001135.png')
-                .setFooter('If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417')
-        }
-    
+           embed.setColor('#1fa1e0')
+               .setAuthor('Bite times for fishing spot: ' + interactionValue[0],'', 'https://ffxivteamcraft.com/db/en/fishing-spot/' + interactionValue[1])
+               .setDescription('`/bitetimes` executed by <@!' + interaction.member + '>')
+               .setImage('attachment://buffered-image.png')
+               .setFooter('Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime)
+       } catch {
+           clearInterval(loadingInterval)
+           embed.setColor('#1fa1e0')
+               .setAuthor('Error retrieving bite times for: ' + interactionValue[0])
+               .setThumbnail('https://xivapi.com/i/001000/001135.png')
+               .setFooter('If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417')
+       }
+   
         await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
         await interaction.editReply({ content: '`...Finished!`', components: [] });
     }
@@ -255,8 +257,7 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (commandName === 'timeline') {
-        await interaction.reply({ content: '`Starting...`'});
-
+        await interaction.reply({ content: '`Starting...`', ephemeral: true});
         let loadingCounter = 0
         const loadingInterval = setInterval(async () => {
             await interaction.editReply({ content: '`Processing'+ '.'.repeat(loadingCounter) + '`', components: [] });
@@ -278,7 +279,7 @@ client.on('interactionCreate', async interaction => {
                 charId: lodestone.Results[0].ID, // just take the first one, hopefully right
                 achievement: achievement,
             })).then(response => response.json());
-
+            
             clearInterval(loadingInterval);
             // via discordjs documentation
             const canvas = Canvas.createCanvas(614,351);
@@ -289,12 +290,8 @@ client.on('interactionCreate', async interaction => {
             context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
             // Use the helpful Attachment class structure to process the file for you
-            attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
+            attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image2.png');
 
-            
-            const reply = await interaction.editReply({ content: '`...Finished!`', components: [], files: (typeof attachment === "undefined" ? [] : [attachment]) });
-
-            const attachmentUrl = reply.attachments.first()?.url ?? ''; 
             embed.setColor('#1fa1e0')
                 //.setTitle(achievement)
                 .setAuthor(
@@ -302,19 +299,19 @@ client.on('interactionCreate', async interaction => {
                     timeline.img,
                     'https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
                 .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **'+ toTitleCase(charName) + ' ('+ toTitleCase(charServer) +')**')
-                .setImage(attachmentUrl)
+                .setImage('attachment://buffered-image2.png')
                 //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
                 .setThumbnail(lodestone.Results[0].Avatar)
                 .setFooter('Based on public Lodestone data.  Run time: ' + timeline.runtime)
-
-            await interaction.followUp({ components: [], embeds: [embed] });
-            await interaction.deleteReply()
 
         } catch(e) {
             console.log(e)
             clearInterval(loadingInterval);
             await interaction.editReply({ content: 'Encountered an error running `/timeline`.  Please double check that the character has the achievement.  If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417', components: [] });
         }
+        await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
+        await wait(7000)
+        await interaction.editReply({ content: '`...Finished!`', components: [] });
     }
 });
 
