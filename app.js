@@ -301,7 +301,7 @@ client.on('interactionCreate', async interaction => {
                 .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **'+ toTitleCase(charName) + ' ('+ toTitleCase(charServer) +')**')
                 .setImage('attachment://buffered-image2.png')
                 //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
-                .setThumbnail(lodestone.Results[0].Avatar)
+                //.setThumbnail(lodestone.Results[0].Avatar)
                 .setFooter('Based on public Lodestone data.  Run time: ' + timeline.runtime)
 
         } catch(e) {
@@ -309,6 +309,7 @@ client.on('interactionCreate', async interaction => {
             clearInterval(loadingInterval);
             await interaction.editReply({ content: 'Encountered an error running `/timeline`.  Please double check that the character has the achievement.  If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417', components: [] });
         }
+        await wait(1000)
         await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
         await wait(7000)
         await interaction.editReply({ content: '`...Finished!`', components: [] });
