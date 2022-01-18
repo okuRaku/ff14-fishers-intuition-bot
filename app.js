@@ -1,28 +1,17 @@
 const { Client, Intents, MessageEmbed, MessageActionRow, MessageSelectMenu, MessageButton, MessageAttachment } = require('discord.js');
 const Canvas = require('canvas');
 
-// const { token } = require('./config.json');
-const token = process.env.TOKEN
+// const { token, channelId, alertRoleRuby, alertRoleCinder, alertRoleEalad } = require('./config.json');
+const [token, channelId, alertRoleRuby, alertRoleCinder, alertRoleEalad] = [process.env.TOKEN, process.env.ALERT_CHANNEL_ID, process.env.ALERT_ROLE_RUBY, process.env.ALERT_ROLE_CINDER, process.env.ALERT_ROLE_EALAD]
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const DATA = require('./data.js')
 
 const wait = require('util').promisify(setTimeout);
+const cron = require('node-cron');
 
-// helper function for determining icon url
-// via: https://xivapi.com/docs/Icons
-const guessIconUrl = (icon_id, hr=false) => {
-    // ensure string
-    icon_id = icon_id.toString()
-    // first we need to add padding to the icon_id
-    if (icon_id.length < 6) {
-        icon_id = icon_id.padStart(6, '0')
-    }
-    // Now we can build the folder from the padded icon_id
-    folder_id = icon_id[0] + icon_id[1] + icon_id[2] + '000'
-    return 'https://xivapi.com/i/' + folder_id + '/' + icon_id + (hr?'_hr1':'') + '.png'
-}
+const windows = require('./windows');
 
 const prettifySelectionKey = (keyString) => {
     return keyString.replace(/(^\w{1})|(\s+\w{1})|(_+\w{1})/g, letter => letter.toUpperCase()).replaceAll('_', ' ')
@@ -36,10 +25,94 @@ const toTitleCase = (phrase) => {
       .join(' ');
 };
 
+
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 client.once('ready', () => {
     console.log('Ready!');
 });
+
+// Following is a background process, designed to check periodically whether a small set of the rarest fish are coming up soon, and message a configured channel if so
+const windowCache = {}
+const updateRareWindowCache = async (fish) => {
+    console.log('!!!! Updating window cache for %s at %s', fish, new Date().toUTCString())
+    const rareWindowData = await windows.getWindowsForFish(fish)
+    windowCache[fish] = rareWindowData
+}
+const rareFishBackgroundChecker = (fish, alertRole) => {
+    let messagesResume = 0;
+    let windowOpen = 0;
+    let diffMillis = 0;
+
+    // run once to initialize
+    updateRareWindowCache(fish).then(() => {
+        cron.schedule(`${fish.charCodeAt(0) % 10} */8 * * *`, async () => {
+            updateRareWindowCache(fish)
+        });
+    
+        const task = cron.schedule('15,30,45,0 * * * *', async () => {
+            console.log('Checking %s at %s', fish, new Date().toUTCString())
+            if(Date.now() > messagesResume) {
+                windowCache[fish].availability = windowCache[fish].availability.filter(x => x.start > Date.now())
+                // nextWindowIndex = windowCache[fish].availability.findIndex((x) => x.start > Date.now())
+                windowOpen = windowCache[fish].availability[0].start
+                diffMillis = (windowOpen - Date.now()) 
+                
+                // set up some intervals in millis
+                const [intervalLong, intervalMedium, intervalShort, intervalImminent] = 
+                [
+                    1440 * 60 * 1000,  // 24 hours
+                    240 * 60 * 1000,   // 4 hours
+                    60 * 60 * 1000,    // 1 hour
+                    30 * 60 * 1000     // 30 minutes
+                ] 
+                if (diffMillis <= 0) { } // do nothing, should not happen
+                else if (diffMillis < intervalImminent) { 
+                    console.log('within 30m, sending message for  %s at %s', fish, new Date().toUTCString()); 
+                    const channel = client.channels.cache.get(channelId);
+                    const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
+                    channel.send({ content: `<@${alertRole}> a rare window approaches...`,
+                        embeds: [embed]
+                    });
+                    messagesResume = windowOpen; 
+                } 
+                else if (diffMillis < intervalShort) { 
+                    console.log('within 1h, sending message for  %s at %s', fish, new Date().toUTCString()); 
+                    const channel = client.channels.cache.get(channelId);
+                    const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
+                    channel.send({ content: `<@${alertRole}> a rare window approaches...`,
+                        embeds: [embed]
+                    });
+                    messagesResume = Date.now() + (diffMillis - intervalImminent);
+                }
+                else if (diffMillis < intervalMedium) { 
+                    console.log('within 4h, sending message for  %s at %s', fish, new Date().toUTCString());
+                    const channel = client.channels.cache.get(channelId);
+                    const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
+                    channel.send({ content: `<@${alertRole}> a rare window approaches...`,
+                        embeds: [embed]
+                    });
+                    messagesResume = Date.now() + (diffMillis - intervalShort);
+                }
+                else if (diffMillis < intervalLong) { 
+                    console.log('within 24h, sending message for  %s at %s', fish, new Date().toUTCString()); 
+                    const channel = client.channels.cache.get(channelId);
+                    const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
+                    channel.send({ content: `<@${alertRole}> a rare window approaches...`,
+                        embeds: [embed]
+                    });
+                    messagesResume = Date.now() + (diffMillis - intervalMedium);
+                }
+            } else {
+                console.log('Task ran, but messages paused till %s for %s at %s', new Date(messagesResume).toUTCString(), fish, new Date().toUTCString());
+            }
+        });
+    })
+}
+
+// start processes for these three rarest fish for now
+rareFishBackgroundChecker('The Ruby Dragon', alertRoleRuby)
+rareFishBackgroundChecker('Cinder Surprise', alertRoleCinder)
+rareFishBackgroundChecker('Ealad Skaan', alertRoleEalad)
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
@@ -210,46 +283,7 @@ client.on('interactionCreate', async interaction => {
         const displayDuration = interaction.options.getBoolean('display_duration') === null ? false : interaction.options.getBoolean('display_duration')
 
 
-        const embed = new MessageEmbed()
-        try {
-            const windows = await fetch('https://ff14-fish-planner.herokuapp.com/windows?format=discord&fish=' + encodeURIComponent(fish)).then(response => response.json());
-            embed.setColor('#1fa1e0')
-                .setThumbnail(guessIconUrl(windows.icon, true))
-                .setFooter('Based on FFX|V Fish Tracker App by Carbuncle Plushy. Run time: ' + windows.runtime.substring(0, 5) + 'ms')
-            if(null != windows.folklore) {
-                embed.setAuthor(
-                        'Upcoming windows for: ' + toTitleCase(fish),
-                        'https://xivapi.com/i/026000/026164.png',
-                        'https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(windows.folklore))
-                     .setDescription(windows.folklore)
-            } else {
-                embed.setAuthor(
-                    'Upcoming windows for: ' + toTitleCase(fish))
-            }
-            const availabilities = windows.availability.slice(0, numWindows)
-            let windowStrings
-            if (compactMode) {
-                windowStrings = availabilities.map(a => (a.start - Date.now() < 8.64e+7 ? `<t:${(a.start / 1000).toFixed(0)}:R>` : `<t:${(a.start / 1000).toFixed(0)}:d> <t:${(a.start / 1000).toFixed(0)}:t>`) + `${displayDuration ? ' (' + a.duration + ')' : ''}${displayDowntime ? '; ' + a.downtime : ''}`)
-                embed.addField('Next Window Start' + (displayDuration ? ' (Duration)' : '') + (displayDowntime ? '; Downtime' : ''), windowStrings.join('\n'), true)
-            } else {
-                windowStrings = availabilities.map(a => `<t:${(a.start / 1000).toFixed(0)}:${(a.start - Date.now() < 8.64e+7) ? 'R' : 'D'}>`)  //shows relative time under 24h
-                embed.addField('Next Start', windowStrings.join('\n'), true)
-                if (displayDuration) {
-                    embed.addField('Duration', availabilities.map(a => `${a.duration}`).join('\n'), true)
-                }
-                if (displayDowntime) {
-                    embed.addField('Downtime', availabilities.map(a => `${a.downtime || '\u200b'}`).join('\n'), true)
-                }
-
-            }
-        } catch {
-            embed.setColor('#1fa1e0')
-                .setTitle('Found no windows for: ' + fish)
-                .setThumbnail('https://xivapi.com/i/001000/001135.png')
-                .setFooter('If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417')
-                .setDescription('Please use exact spelling, with spaces and punctuation.  Click the above title link to search Teamcraft for your fish.')
-                .setURL('https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(fish))
-        }
+        const embed = await windows.buildEmbed(fish, numWindows, displayDowntime, compactMode, displayDuration)
 
         interaction.editReply({
             embeds: [embed]
