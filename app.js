@@ -70,7 +70,7 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
                     console.log('within 30m, sending message for  %s at %s', fish, new Date().toUTCString()); 
                     const channel = client.channels.cache.get(channelId);
                     const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
-                    channel.send({ content: `<@${alertRole}> a rare window approaches...`,
+                    channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
                         embeds: [embed]
                     });
                     messagesResume = windowOpen; 
@@ -79,7 +79,7 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
                     console.log('within 1h, sending message for  %s at %s', fish, new Date().toUTCString()); 
                     const channel = client.channels.cache.get(channelId);
                     const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
-                    channel.send({ content: `<@${alertRole}> a rare window approaches...`,
+                    channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
                         embeds: [embed]
                     });
                     messagesResume = Date.now() + (diffMillis - intervalImminent);
@@ -88,7 +88,7 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
                     console.log('within 4h, sending message for  %s at %s', fish, new Date().toUTCString());
                     const channel = client.channels.cache.get(channelId);
                     const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
-                    channel.send({ content: `<@${alertRole}> a rare window approaches...`,
+                    channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
                         embeds: [embed]
                     });
                     messagesResume = Date.now() + (diffMillis - intervalShort);
@@ -97,7 +97,7 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
                     console.log('within 24h, sending message for  %s at %s', fish, new Date().toUTCString()); 
                     const channel = client.channels.cache.get(channelId);
                     const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
-                    channel.send({ content: `<@${alertRole}> a rare window approaches...`,
+                    channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
                         embeds: [embed]
                     });
                     messagesResume = Date.now() + (diffMillis - intervalMedium);
