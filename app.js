@@ -69,7 +69,7 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
                 else if (diffMillis < intervalImminent) { 
                     console.log('within 30m, sending message for  %s at %s', fish, new Date().toUTCString()); 
                     const channel = client.channels.cache.get(channelId);
-                    const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
+                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish])
                     channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
                         embeds: [embed]
                     });
@@ -78,7 +78,7 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
                 else if (diffMillis < intervalShort) { 
                     console.log('within 1h, sending message for  %s at %s', fish, new Date().toUTCString()); 
                     const channel = client.channels.cache.get(channelId);
-                    const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
+                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish])
                     channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
                         embeds: [embed]
                     });
@@ -87,7 +87,7 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
                 else if (diffMillis < intervalMedium) { 
                     console.log('within 4h, sending message for  %s at %s', fish, new Date().toUTCString());
                     const channel = client.channels.cache.get(channelId);
-                    const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
+                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish])
                     channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
                         embeds: [embed]
                     });
@@ -96,7 +96,7 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
                 else if (diffMillis < intervalLong) { 
                     console.log('within 24h, sending message for  %s at %s', fish, new Date().toUTCString()); 
                     const channel = client.channels.cache.get(channelId);
-                    const embed = await windows.buildEmbed(fish, 1, true, false, false, windowCache[fish])
+                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish])
                     channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
                         embeds: [embed]
                     });
