@@ -63,6 +63,8 @@ const commands = [
             ['On a Boat','On a Boat'],
             ['No More Fish in the Sea','No More Fish in the Sea']
         ]))
+        .addStringOption(option => option.setName('except_ranks').setRequired(false).setDescription('Advanced: Give a comma separated list of ranks to exclude from the plot, e.g. 2,3'))
+        
 ]
     .map(command => command.toJSON());
 

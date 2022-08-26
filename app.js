@@ -301,6 +301,7 @@ client.on('interactionCreate', async interaction => {
         const charName = interaction.options.getString('character_name');
         const charServer = interaction.options.getString('server');
         const achievement = interaction.options.getString('achievement');
+        const except_ranks = interaction.options.getString('except_ranks');
 
         const embed = new MessageEmbed()
         let attachment
@@ -312,6 +313,7 @@ client.on('interactionCreate', async interaction => {
             const timeline = await fetch('https://ff14-fishing-plotter.herokuapp.com/timeline?'  + new URLSearchParams({
                 charId: lodestone.Results[0].ID, // just take the first one, hopefully right
                 achievement: achievement,
+                exceptRanks: except_ranks
             })).then(response => response.json());
             
             clearInterval(loadingInterval);
