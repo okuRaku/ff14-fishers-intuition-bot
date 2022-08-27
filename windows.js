@@ -51,8 +51,8 @@ module.exports = {
             const availabilities = windows.availability.slice(0, numWindows)
             let windowStrings
             if (compactMode) {
-                windowStrings = availabilities.map(a => (a.start - Date.now() < 3.6e+6 ? `<t:${(a.start / 1000).toFixed(0)}:R>` : `<t:${(a.start / 1000).toFixed(0)}:d> <t:${(a.start / 1000).toFixed(0)}:t>`) + `${displayDuration ? ' (' + a.duration + ')' : ''}${displayDowntime ? '; ' + a.downtime : ''}`)
-                embed.addField('Next Window Start' + (displayDuration ? ' (Duration)' : '') + (displayDowntime ? '; Downtime' : ''), windowStrings.join('\n'), true)
+                windowStrings = availabilities.map(a => (a.start - Date.now() < 3.6e+6 ? `<t:${(a.start / 1000).toFixed(0)}:R>` : `<t:${(a.start / 1000).toFixed(0)}:d> <t:${(a.start / 1000).toFixed(0)}:t>`) + `${displayDuration ? ' (' + a.duration + ')' : ''}${displayDowntime ? '/ ' + a.downtime : ''}`)
+                embed.addField('Next Window' + (displayDuration ? ' (Duration)' : '') + (displayDowntime ? '/ Downtime' : ''), windowStrings.join('\n'), true)
             } else {
                 windowStrings = availabilities.map(a => `<t:${(a.start / 1000).toFixed(0)}:${(a.start - Date.now() < 3.6e+6) ? 'R' : 'D'}>`)  //shows relative time under 1h
                 embed.addField('Next Start', windowStrings.join('\n'), true)
