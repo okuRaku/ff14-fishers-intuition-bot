@@ -1,0 +1,14 @@
+# fly.toml file generated for ff14-fish-tracker-bot on 2022-10-25T21:37:53+09:00
+
+app = "ff14-fish-tracker-bot"
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[build]
+  builder = "heroku/buildpacks:20"
+
+[experimental]
+  allowed_public_ports = []
+  auto_rollback = true
+
