@@ -1,4 +1,7 @@
 {
+  "name": "ff14-fishers-intuition-bot",
+  "version": "1.0.0",
+  "author": "Jesse <oku4ku@gmail.com>",
   "dependencies": {
     "@discordjs/builders": "^0.6.0",
     "@discordjs/rest": "^0.1.0-canary.0",

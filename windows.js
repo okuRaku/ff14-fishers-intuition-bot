@@ -24,7 +24,7 @@ const toTitleCase = (phrase) => {
 };
 
 const getWindowsForFish = async (fish) => {
-    const windows = await fetch('https://ff14-fish-planner.herokuapp.com/windows?format=discord&fish=' + encodeURIComponent(fish)).then(response => response.json());
+    const windows = await fetch('https://ff14-fish-windows.fly.dev/windows?format=discord&fish=' + encodeURIComponent(fish)).then(response => response.json());
     return windows
 };
 

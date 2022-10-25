@@ -208,7 +208,7 @@ client.on('interactionCreate', async interaction => {
         const embed = new MessageEmbed()
         let attachment
         try {
-            const bitetimes = await fetch('https://ff14-fishing-plotter.herokuapp.com/bitetimes?'  + new URLSearchParams({
+            const bitetimes = await fetch('https://ff14-fish-plotter.fly.dev/bitetimes?'  + new URLSearchParams({
                 spotId: interactionValue[1],
                 plotType: plotType || 'box',
             })).then(response => response.json());
@@ -310,7 +310,7 @@ client.on('interactionCreate', async interaction => {
                 name: charName,
                 server: charServer,
             })).then(response => response.json());
-            const timeline = await fetch('https://ff14-fishing-plotter.herokuapp.com/timeline?'  + new URLSearchParams({
+            const timeline = await fetch('https://ff14-fish-plotter.fly.dev/timeline?'  + new URLSearchParams({
                 charId: lodestone.Results[0].ID, // just take the first one, hopefully right
                 achievement: achievement,
                 exceptRanks: except_ranks
