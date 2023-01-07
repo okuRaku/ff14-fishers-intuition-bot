@@ -51,8 +51,12 @@ client.once('ready', () => {
 const windowCache = {}
 const updateRareWindowCache = async (fish) => {
     console.log('!!!! Updating window cache for %s at %s', fish, new Date().toUTCString())
-    const rareWindowData = await windows.getWindowsForFish(fish)
-    windowCache[fish] = rareWindowData
+    try {
+        const rareWindowData = await windows.getWindowsForFish(fish)
+        windowCache[fish] = rareWindowData
+    } catch(e) {
+        // do nothing, maybe no windows available.
+    }   
 }
 const rareFishBackgroundChecker = (fish, alertRole, channelId) => {
     let messagesResume = 0;
@@ -67,7 +71,7 @@ const rareFishBackgroundChecker = (fish, alertRole, channelId) => {
     
         const task = cron.schedule('15,30,45,0 * * * *', async () => {
             console.log('Checking %s at %s', fish, new Date().toUTCString())
-            if(Date.now() > messagesResume) {
+            if(Date.now() > messagesResume && fish in windowCache) {
                 windowCache[fish].availability = windowCache[fish].availability.filter(x => x.start > Date.now())
                 // nextWindowIndex = windowCache[fish].availability.findIndex((x) => x.start > Date.now())
                 windowOpen = windowCache[fish].availability[0].start
