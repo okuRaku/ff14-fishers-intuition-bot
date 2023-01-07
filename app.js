@@ -1,8 +1,24 @@
 const { Client, Intents, MessageEmbed, MessageActionRow, MessageSelectMenu, MessageButton, MessageAttachment } = require('discord.js');
 const Canvas = require('canvas');
 
-// const { token, channelId, alertRoleRuby, alertRoleCinder, alertRoleEalad } = require('./config.json');
-const [token, channelId, alertRoleRuby, alertRoleCinder, alertRoleEalad] = [process.env.TOKEN, process.env.ALERT_CHANNEL_ID, process.env.ALERT_ROLE_RUBY, process.env.ALERT_ROLE_CINDER, process.env.ALERT_ROLE_EALAD]
+// const { token, rareFishChannelId, testerChannel, alertRoleRuby, alertRoleCinder, alertRoleEalad, alertRoleTester } = require('./config.json');
+const [
+    token, 
+    rareFishChannel, 
+    testerChannel,
+    alertRoleRuby, 
+    alertRoleCinder, 
+    alertRoleEalad,
+    alertRoleTester
+] = [
+    process.env.TOKEN, 
+    process.env.ALERT_CHANNEL_ID, 
+    process.env.ALERT_TESTER_CHANNEL_ID, 
+    process.env.ALERT_ROLE_RUBY, 
+    process.env.ALERT_ROLE_CINDER, 
+    process.env.ALERT_ROLE_EALAD,
+    process.env.ALERT_ROLE_TESTER
+]
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
@@ -38,7 +54,7 @@ const updateRareWindowCache = async (fish) => {
     const rareWindowData = await windows.getWindowsForFish(fish)
     windowCache[fish] = rareWindowData
 }
-const rareFishBackgroundChecker = (fish, alertRole) => {
+const rareFishBackgroundChecker = (fish, alertRole, channelId) => {
     let messagesResume = 0;
     let windowOpen = 0;
     let diffMillis = 0;
@@ -110,9 +126,11 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
 }
 
 // start processes for these three rarest fish for now
-rareFishBackgroundChecker('The Ruby Dragon', alertRoleRuby)
-rareFishBackgroundChecker('Cinder Surprise', alertRoleCinder)
-rareFishBackgroundChecker('Ealad Skaan', alertRoleEalad)
+rareFishBackgroundChecker('The Ruby Dragon', alertRoleRuby, rareFishChannel)
+rareFishBackgroundChecker('Cinder Surprise', alertRoleCinder, rareFishChannel)
+rareFishBackgroundChecker('Ealad Skaan', alertRoleEalad, rareFishChannel)
+// in addition, the tester fish for discovery
+rareFishBackgroundChecker('Fishcord Testfish', alertRoleTester, testerChannel)
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
