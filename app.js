@@ -1,8 +1,8 @@
 const { Client, Intents, MessageEmbed, MessageActionRow, MessageSelectMenu, MessageButton, MessageAttachment } = require('discord.js');
 const Canvas = require('canvas');
 
-// const { token, channelId, alertRoleRuby, alertRoleCinder, alertRoleEalad } = require('./config.json');
-const [token, channelId, alertRoleRuby, alertRoleCinder, alertRoleEalad] = [process.env.TOKEN, process.env.ALERT_CHANNEL_ID, process.env.ALERT_ROLE_RUBY, process.env.ALERT_ROLE_CINDER, process.env.ALERT_ROLE_EALAD]
+// const { token, channelIds, alertRoles } = require('./config.json');
+const [token, channelIds, alertRoles] = [process.env.TOKEN, JSON.parse(process.env.ALERT_CHANNEL_IDS), JSON.parse(process.env.ALERT_ROLES)]
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
@@ -38,7 +38,7 @@ const updateRareWindowCache = async (fish) => {
     const rareWindowData = await windows.getWindowsForFish(fish)
     windowCache[fish] = rareWindowData
 }
-const rareFishBackgroundChecker = (fish, alertRole) => {
+const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
     let messagesResume = 0;
     let windowOpen = 0;
     let diffMillis = 0;
@@ -110,9 +110,11 @@ const rareFishBackgroundChecker = (fish, alertRole) => {
 }
 
 // start processes for these three rarest fish for now
-rareFishBackgroundChecker('The Ruby Dragon', alertRoleRuby)
-rareFishBackgroundChecker('Cinder Surprise', alertRoleCinder)
-rareFishBackgroundChecker('Ealad Skaan', alertRoleEalad)
+channelIds.forEach(chan => {
+    rareFishBackgroundChecker('The Ruby Dragon', chan, alertRoles[chan]["ruby"])
+    rareFishBackgroundChecker('Cinder Surprise', chan, alertRoles[chan]["cinder"])
+    rareFishBackgroundChecker('Ealad Skaan', chan, alertRoles[chan]["ealad"])
+})
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
