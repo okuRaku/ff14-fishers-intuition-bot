@@ -1,5 +1,5 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-const { MessageEmbed } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 
 // helper function for determining icon url
 // via: https://xivapi.com/docs/Icons
@@ -31,7 +31,7 @@ const getWindowsForFish = async (fish) => {
 module.exports = {
     getWindowsForFish: getWindowsForFish,
     buildEmbed: async (fish, numWindows, displayDowntime, compactMode, displayDuration, cachedWindowData = undefined, authorTextPrefix = 'Upcoming windows for: ') => {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
         try {
             const windows = cachedWindowData || await getWindowsForFish(fish)
             embed.setColor('#1fa1e0')
@@ -39,9 +39,9 @@ module.exports = {
                 .setFooter({text: 'Based on FFX|V Fish Tracker App by Carbuncle Plushy.'}) // Run time: ' + windows.runtime.substring(0, 5) + 'ms'})
             if(null != windows.folklore) {
                 embed.setAuthor({
-                        name: authorTextPrefix + toTitleCase(fish),
-                        iconURL: 'https://xivapi.com/i/026000/026164.png',
-                        url: 'https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(windows.folklore)})
+                    name: authorTextPrefix + toTitleCase(fish),
+                    iconURL: 'https://xivapi.com/i/026000/026164.png',
+                    url: 'https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(windows.folklore)})
                      .setDescription(windows.folklore)
             } else {
                 embed.setAuthor(

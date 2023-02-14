@@ -1,4 +1,4 @@
-const { Client, Intents, MessageEmbed, MessageActionRow, MessageSelectMenu, MessageButton, MessageAttachment } = require('discord.js');
+const { Client, Events, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const Canvas = require('canvas');
 
 // const { token, channelIds, alertRoles } = require('./config.json');
@@ -25,9 +25,8 @@ const toTitleCase = (phrase) => {
       .join(' ');
 };
 
-
-const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
-client.once('ready', () => {
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+client.once(Events.ClientReady, c => {
     console.log('Ready!');
 });
 
@@ -136,15 +135,15 @@ client.on('interactionCreate', async interaction => {
 })
 
 client.on('interactionCreate', async interaction => {
-    if (!interaction.isSelectMenu()) return;
+    if (!interaction.isStringSelectMenu()) return;
     // When a select menu interaction is created, we make sure the values parameter (all that gets passed)
     // carries along any data we need from prior menus.   This is done by having values be a comma separated list
     const [selectValue, plotType] = interaction.values[0].split(',')    
 
     if (interaction.customId === 'region' && !Array.isArray(DATA.SPOTS[selectValue])) {
-        const row = new MessageActionRow()
+        const row = new ActionRowBuilder()
             .addComponents(
-                new MessageSelectMenu()
+                new StringSelectMenuBuilder()
                     .setCustomId('zone')
                     .setPlaceholder('Select Zone')
                     // ZONES
@@ -155,12 +154,12 @@ client.on('interactionCreate', async interaction => {
                         }})),
             )
 
-        const buttonRow = new MessageActionRow()
+        const buttonRow = new ActionRowBuilder()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('cancel')
                     .setLabel('Cancel')
-                    .setStyle('SECONDARY'),
+                    .setStyle(ButtonStyle.Secondary),
             )
 
         await interaction.update({ content: 'Chart bite times for a fishing spot.  Please make a selection:', ephemeral: true, components: [row, buttonRow] });
@@ -179,9 +178,9 @@ client.on('interactionCreate', async interaction => {
     if (options.length != 1 
         && (interaction.customId === 'zone' || Array.isArray(DATA.SPOTS[selectValue]))) {
         
-        const row = new MessageActionRow()
+        const row = new ActionRowBuilder()
             .addComponents(
-                new MessageSelectMenu()
+                new StringSelectMenuBuilder()
                     .setCustomId('spot')
                     .setPlaceholder('Select Fishing Spot')
                     // SPOTS
@@ -193,12 +192,12 @@ client.on('interactionCreate', async interaction => {
 
             )
 
-        const buttonRow = new MessageActionRow()
+        const buttonRow = new ActionRowBuilder()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('cancel')
                     .setLabel('Cancel')
-                    .setStyle('SECONDARY'),
+                    .setStyle(ButtonStyle.Secondary),
             )
 
         await interaction.update({ content: 'Chart bite times for a fishing spot.  Please make a selection:', ephemeral: true, components: [row, buttonRow] });
@@ -217,7 +216,7 @@ client.on('interactionCreate', async interaction => {
             (interaction.customId === 'zone' && options.length === 1)?
             options[0]:
             selectValue.split(';'))
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
         let attachment
         try {
             const bitetimes = await fetch('https://ff14-fish-plotter.fly.dev/bitetimes?'  + new URLSearchParams({
@@ -236,19 +235,19 @@ client.on('interactionCreate', async interaction => {
             context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
            // Use the helpful Attachment class structure to process the file for you
-           attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image.png');
+           attachment = new AttachmentBuilder(canvas.toBuffer(), {name: 'buffered-image.png'});
 
            embed.setColor('#1fa1e0')
-               .setAuthor('Bite times for fishing spot: ' + interactionValue[0],'', 'https://ffxivteamcraft.com/db/en/fishing-spot/' + interactionValue[1])
+               .setAuthor({name: 'Bite times for fishing spot: ' + interactionValue[0], url: 'https://ffxivteamcraft.com/db/en/fishing-spot/' + interactionValue[1]})
                .setDescription('`/bitetimes` executed by <@!' + interaction.member + '>')
                .setImage('attachment://buffered-image.png')
-               .setFooter('Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime)
+               .setFooter({text: 'Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime})
        } catch {
            clearInterval(loadingInterval)
            embed.setColor('#1fa1e0')
-               .setAuthor('Error retrieving bite times for: ' + interactionValue[0])
+               .setAuthor({name: 'Error retrieving bite times for: ' + interactionValue[0]})
                .setThumbnail('https://xivapi.com/i/001000/001135.png')
-               .setFooter('If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417')
+               .setFooter({text: 'If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417' })
        }
    
         await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
@@ -263,9 +262,9 @@ client.on('interactionCreate', async interaction => {
 
     if (commandName === 'bitetimes') {
         const plotType = interaction.options.getString('plot_type');
-        const row = new MessageActionRow()
+        const row = new ActionRowBuilder()
             .addComponents(
-                new MessageSelectMenu()
+                new StringSelectMenuBuilder()
                     .setCustomId('region')
                     .setPlaceholder('Select Region')
                     // REGION
@@ -275,12 +274,12 @@ client.on('interactionCreate', async interaction => {
                             value: [key, plotType].join(',')}
                         })),
             )
-        const buttonRow = new MessageActionRow()
+        const buttonRow = new ActionRowBuilder()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('cancel')
                     .setLabel('Cancel')
-                    .setStyle('SECONDARY'),
+                    .setStyle(ButtonStyle.Secondary),
             )
 
         await interaction.reply({ content: 'Chart bite times for a fishing spot.  Please make a selection:', ephemeral: true, components: [row, buttonRow] });
@@ -315,7 +314,7 @@ client.on('interactionCreate', async interaction => {
         const achievement = interaction.options.getString('achievement');
         const except_ranks = interaction.options.getString('except_ranks');
 
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
         let attachment
         try {
             const lodestone = await fetch('https://xivapi.com/character/search?'  + new URLSearchParams({
@@ -338,19 +337,19 @@ client.on('interactionCreate', async interaction => {
             context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
             // Use the helpful Attachment class structure to process the file for you
-            attachment = new MessageAttachment(canvas.toBuffer(), 'buffered-image2.png');
+            attachment = new AttachmentBuilder(canvas.toBuffer(), {name: 'buffered-image2.png'});
 
             embed.setColor('#1fa1e0')
                 //.setTitle(achievement)
-                .setAuthor(
-                    achievement,
-                    timeline.img,
-                    'https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
+                .setAuthor({
+                    name: achievement,
+                    iconURL: timeline.img,
+                    url: 'https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement'})
                 .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **'+ toTitleCase(charName) + ' ('+ toTitleCase(charServer) +')**')
                 .setImage('attachment://buffered-image2.png')
                 //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
                 //.setThumbnail(lodestone.Results[0].Avatar)
-                .setFooter('Based on public Lodestone data.  Run time: ' + timeline.runtime)
+                .setFooter({text: 'Based on public Lodestone data.  Run time: ' + timeline.runtime})
 
             await wait(1000)
             await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
