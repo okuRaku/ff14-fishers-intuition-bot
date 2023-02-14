@@ -42,7 +42,6 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
     let messagesResume = 0;
     let windowOpen = 0;
     let diffMillis = 0;
-
     // run once to initialize
     updateRareWindowCache(fish).then(() => {
         cron.schedule(`${fish.charCodeAt(0) % 10} */8 * * *`, async () => {
@@ -51,8 +50,10 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
     
         const task = cron.schedule('15,30,45,0 * * * *', async () => {
             console.log('Checking %s at %s', fish, new Date().toUTCString())
-            if(Date.now() > messagesResume) {
+            if(Date.now() > messagesResume && !("DISABLE_ALERTS" in process.env && process.env.DISABLE_ALERTS === "true")) {
+                
                 windowCache[fish].availability = windowCache[fish].availability.filter(x => x.start > Date.now())
+
                 // nextWindowIndex = windowCache[fish].availability.findIndex((x) => x.start > Date.now())
                 windowOpen = windowCache[fish].availability[0].start
                 diffMillis = (windowOpen - Date.now()) 
@@ -65,42 +66,51 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
                     60 * 60 * 1000,    // 1 hour
                     30 * 60 * 1000     // 30 minutes
                 ] 
+
+                let alertMessage;
                 if (diffMillis <= 0) { } // do nothing, should not happen
                 else if (diffMillis < intervalImminent) { 
-                    console.log('within 30m, sending message for  %s at %s', fish, new Date().toUTCString()); 
-                    const channel = client.channels.cache.get(channelId);
-                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish])
-                    channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
+                    console.log('Preparing an "imminent" alert for %s at %s', fish, new Date().toUTCString()); 
+                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 30m alert for: ')
+                    alertMessage = { content: `<@&${alertRole}> a rare window is imminent...`,
                         embeds: [embed]
-                    });
+                    };
                     messagesResume = windowOpen; 
                 } 
                 else if (diffMillis < intervalShort) { 
-                    console.log('within 1h, sending message for  %s at %s', fish, new Date().toUTCString()); 
-                    const channel = client.channels.cache.get(channelId);
-                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish])
-                    channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
+                    console.log('Preparing an "short" alert for %s at %s', fish, new Date().toUTCString()); 
+                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 1h alert for: ')
+                    alertMessage = { content: `<@&${alertRole}> a rare window is less than an hour away...`,
                         embeds: [embed]
-                    });
+                    };
                     messagesResume = Date.now() + (diffMillis - intervalImminent);
                 }
                 else if (diffMillis < intervalMedium) { 
-                    console.log('within 4h, sending message for  %s at %s', fish, new Date().toUTCString());
-                    const channel = client.channels.cache.get(channelId);
-                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish])
-                    channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
+                    console.log('Preparing an "medium" alert for %s at %s', fish, new Date().toUTCString());
+                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 4h alert for: ')
+                    alertMessage = { content: `<@&${alertRole}> a rare window is less than four hours away...`,
                         embeds: [embed]
-                    });
+                    };
                     messagesResume = Date.now() + (diffMillis - intervalShort);
                 }
                 else if (diffMillis < intervalLong) { 
-                    console.log('within 24h, sending message for  %s at %s', fish, new Date().toUTCString()); 
-                    const channel = client.channels.cache.get(channelId);
-                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish])
-                    channel.send({ content: `<@&${alertRole}> a rare window approaches...`,
+                    console.log('Preparing an "long" alert for %s at %s', fish, new Date().toUTCString()); 
+                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 24h alert for: ')
+                    alertMessage = { content: `<@&${alertRole}> a rare window is less than a day away...`,
                         embeds: [embed]
-                    });
+                    };
                     messagesResume = Date.now() + (diffMillis - intervalMedium);
+                }
+                if(alertMessage) {
+                    const channel = client.channels.cache.get(channelId);
+                    channel.messages.fetch({ limit: 20 }).then(messages => {
+                        // make sure the embed wasn't already sent before proceeding
+                        if(messages.size > 0 && messages.every(message => !(message.embeds[0] && message.embeds[0].equals(alertMessage.embeds[0])))) {
+                            channel.send(alertMessage)
+                        } else {
+                            console.log('Alert for %s at %s was not sent due to duplicate.', fish, new Date().toUTCString()); 
+                        }
+                    }).catch(console.error);
                 }
             } else {
                 console.log('Task ran, but messages paused till %s for %s at %s', new Date(messagesResume).toUTCString(), fish, new Date().toUTCString());
