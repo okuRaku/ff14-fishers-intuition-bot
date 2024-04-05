@@ -42,27 +42,31 @@ const commands = [
         .addBooleanOption(option => option.setName('compact_mode').setRequired(false).setDescription('Compact view more suitable for mobile.  Default true.')),
     new SlashCommandBuilder().setName('bitetimes')
         .setDescription('Bite timings for a spot.  Run without parameters (a menu will appear).  Based on FFXIV Teamcraft')
-        .addStringOption(option => option.setName('plot_type').setRequired(false).setDescription('Optionally adjust plot type.').addChoices([['box','box'],['histogram','histogram']])),
+        .addStringOption(option => option.setName('plot_type').setRequired(false).setDescription('Optionally adjust plot type.')
+            .addChoices(
+                { name: 'box', value: 'box' },
+                { name: 'histogram', value: 'histogram' },
+            )),
     new SlashCommandBuilder().setName('timeline')
         .setDescription('View achievement timeline.')
         .addStringOption(option => option.setName('character_name').setRequired(true).setDescription('Character name.'))
         .addStringOption(option => option.setName('server').setRequired(true).setDescription('Character\'s server.'))
-        .addStringOption(option => option.setName('achievement').setRequired(true).setDescription('Achievement to chart.').addChoices([
-            ['Good Things Come to Those Who Bait: La Noscea', 'Good Things Come to Those Who Bait: La Noscea'],
-            ['Good Things Come to Those Who Bait: Black Shroud', 'Good Things Come to Those Who Bait: Black Shroud'],
-            ['Good Things Come to Those Who Bait: Thanalan', 'Good Things Come to Those Who Bait: Thanalan'],
-            ['Baiting <Expansion>','Baiting'],
-            ['I Caught That','I Caught That'],
-            ['The One That Didn\'t Get Away','The One That Didn\'t Get Away'],
-            ['Go Big or Go Home','Go Big or Go Home'],
-            ['Go Big Far from Home','Go Big Far from Home'],
-            ['Skyward Rod','Skyward Rod'],
-            ['Dauntless Treader','Dauntless Treader'],
-            ['Specters of <Location>','Specters of'],
-            ['Denizens of <Location>','Denizens of'],
-            ['On a Boat','On a Boat'],
-            ['No More Fish in the Sea','No More Fish in the Sea']
-        ]))
+        .addStringOption(option => option.setName('achievement').setRequired(true).setDescription('Achievement to chart.').addChoices(
+            { name:'Good Things Come to Those Who Bait: La Noscea', value: 'Good Things Come to Those Who Bait: La Noscea' },
+            { name: 'Good Things Come to Those Who Bait: Black Shroud', value: 'Good Things Come to Those Who Bait: Black Shroud' },
+            { name: 'Good Things Come to Those Who Bait: Thanalan', value: 'Good Things Come to Those Who Bait: Thanalan' },
+            { name: 'Baiting <Expansion>', value: 'Baiting' },
+            { name: 'I Caught That', value: 'I Caught That' },
+            { name: 'The One That Didn\'t Get Away', value: 'The One That Didn\'t Get Away' },
+            { name: 'Go Big or Go Home', value: 'Go Big or Go Home' },
+            { name: 'Go Big Far from Home', value: 'Go Big Far from Home' },
+            { name: 'Skyward Rod', value: 'Skyward Rod' },
+            { name: 'Dauntless Treader', value: 'Dauntless Treader' },
+            { name: 'Specters of <Location>', value: 'Specters of' },
+            { name: 'Denizens of <Location>', value: 'Denizens of' },
+            { name: 'On a Boat', value: 'On a Boat' },
+            { name: 'No More Fish in the Sea', value: 'No More Fish in the Sea' },
+        ))
         .addStringOption(option => option.setName('except_ranks').setRequired(false).setDescription('Advanced: Give a comma separated list of ranks to exclude from the plot, e.g. 2,3'))
         
 ]
