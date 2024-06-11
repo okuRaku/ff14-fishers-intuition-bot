@@ -56,7 +56,16 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
                 // nextWindowIndex = windowCache[fish].availability.findIndex((x) => x.start > Date.now())
                 windowOpen = windowCache[fish].availability[0].start
                 diffMillis = (windowOpen - Date.now()) 
-                
+
+                // If there's a known maintenance window coming up, no need to alert
+                let upcomingKnownMaintenance = false;
+                const lodestone = await fetch('https://lodestonenews.com/news/maintenance/current').then(response => response.json());
+                if(lodestone && lodestone.game && lodestone.game.some((maint) => {
+                    return (windowOpen > Date.parse(maint.start) && windowOpen < Date.parse(maint.end))
+                })) {
+                    upcomingKnownMaintenance = true;
+                }
+
                 // set up some intervals in millis
                 const [intervalLong, intervalMedium, intervalShort, intervalImminent] = 
                 [
@@ -71,15 +80,21 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
                 else if (diffMillis < intervalImminent) { 
                     console.log('Preparing an "imminent" alert for %s at %s', fish, new Date().toUTCString()); 
                     const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 30m alert for: ')
-                    alertMessage = { content: `<@&${alertRole}> a rare window is imminent...`,
+                    const contentString = upcomingKnownMaintenance ? 
+                        '🚧Maintenance🚧 a rare window would have been imminent..' :
+                        `<@&${alertRole}> a rare window is imminent...`
+                    alertMessage = { content: contentString,
                         embeds: [embed]
                     };
                     messagesResume = windowOpen; 
                 } 
                 else if (diffMillis < intervalShort) { 
-                    console.log('Preparing an "short" alert for %s at %s', fish, new Date().toUTCString()); 
+                    console.log('Preparing  a "short" alert for %s at %s', fish, new Date().toUTCString()); 
                     const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 1h alert for: ')
-                    alertMessage = { content: `<@&${alertRole}> a rare window is less than an hour away...`,
+                    const contentString = upcomingKnownMaintenance ? 
+                        '🚧Maintenance🚧 a rare window would have been less than an hour away..' :
+                        `<@&${alertRole}> a rare window is less than an hour away...`
+                    alertMessage = { content: contentString,
                         embeds: [embed]
                     };
                     messagesResume = Date.now() + (diffMillis - intervalImminent);
@@ -87,7 +102,10 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
                 else if (diffMillis < intervalMedium) { 
                     console.log('Preparing an "medium" alert for %s at %s', fish, new Date().toUTCString());
                     const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 4h alert for: ')
-                    alertMessage = { content: `<@&${alertRole}> a rare window is less than four hours away...`,
+                    const contentString = upcomingKnownMaintenance ? 
+                        '🚧Maintenance🚧 a rare window would have been less than four hours away..' :
+                        `<@&${alertRole}> a rare window is less than four hours away...`
+                    alertMessage = { content: contentString,
                         embeds: [embed]
                     };
                     messagesResume = Date.now() + (diffMillis - intervalShort);
@@ -95,7 +113,10 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
                 else if (diffMillis < intervalLong) { 
                     console.log('Preparing an "long" alert for %s at %s', fish, new Date().toUTCString()); 
                     const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 24h alert for: ')
-                    alertMessage = { content: `<@&${alertRole}> a rare window is less than a day away...`,
+                    const contentString = upcomingKnownMaintenance ? 
+                        '🚧Maintenance🚧 a rare window would have been less than a day away..' :
+                        `<@&${alertRole}> a rare window is less than a day away...`
+                    alertMessage = { content: contentString,
                         embeds: [embed]
                     };
                     messagesResume = Date.now() + (diffMillis - intervalMedium);
