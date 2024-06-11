@@ -338,12 +338,12 @@ client.on('interactionCreate', async interaction => {
         const embed = new EmbedBuilder()
         let attachment
         try {
-            const lodestone = await fetch('https://xivapi.com/character/search?'  + new URLSearchParams({
+            const lodestone = await fetch('https://ff14-fish-plotter.fly.dev/character?'  + new URLSearchParams({
                 name: charName,
                 server: charServer,
             })).then(response => response.json());
             const timeline = await fetch('https://ff14-fish-plotter.fly.dev/timeline?'  + new URLSearchParams({
-                charId: lodestone.Results[0].ID, // just take the first one, hopefully right
+                charId: lodestone.charId, 
                 achievement: achievement,
                 exceptRanks: except_ranks
             })).then(response => response.json());
@@ -365,11 +365,10 @@ client.on('interactionCreate', async interaction => {
                 .setAuthor({
                     name: achievement,
                     iconURL: timeline.img,
-                    url: 'https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement'})
+                    url: 'https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.charId + '/achievement/category/34/#anchor_achievement'})
                 .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **'+ toTitleCase(charName) + ' ('+ toTitleCase(charServer) +')**')
                 .setImage('attachment://buffered-image2.png')
-                //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.Results[0].ID + '/achievement/category/34/#anchor_achievement')
-                //.setThumbnail(lodestone.Results[0].Avatar)
+                //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.charId + '/achievement/category/34/#anchor_achievement')
                 .setFooter({text: 'Based on public Lodestone data.  Run time: ' + timeline.runtime})
 
             await wait(1000)
