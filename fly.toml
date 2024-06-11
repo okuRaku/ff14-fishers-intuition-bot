@@ -3,6 +3,7 @@
 app = "ff14-fish-tracker-bot"
 kill_signal = "SIGINT"
 kill_timeout = 5
+primary_region = "sea"
 processes = []
 
 [build]
