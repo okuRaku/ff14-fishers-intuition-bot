@@ -1,4 +1,4 @@
-const { Client, Events, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { ChannelType, Client, Events, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const Canvas = require('canvas');
 
 // const { token, channelIds, alertRoles } = require('./config.json');
@@ -19,10 +19,10 @@ const prettifySelectionKey = (keyString) => {
 
 const toTitleCase = (phrase) => {
     return phrase
-      .toLowerCase()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 };
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -46,89 +46,99 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
         cron.schedule(`${fish.charCodeAt(0) % 10} */8 * * *`, async () => {
             updateRareWindowCache(fish)
         });
-    
+
         const task = cron.schedule('15,30,45,0 * * * *', async () => {
             console.log('Checking %s at %s', fish, new Date().toUTCString())
-            if(Date.now() > messagesResume && !("DISABLE_ALERTS" in process.env && process.env.DISABLE_ALERTS === "true")) {
-                
+            if (Date.now() > messagesResume && !("DISABLE_ALERTS" in process.env && process.env.DISABLE_ALERTS === "true")) {
+
                 windowCache[fish].availability = windowCache[fish].availability.filter(x => x.start > Date.now())
 
                 // nextWindowIndex = windowCache[fish].availability.findIndex((x) => x.start > Date.now())
                 windowOpen = windowCache[fish].availability[0].start
-                diffMillis = (windowOpen - Date.now()) 
+                diffMillis = (windowOpen - Date.now())
 
                 // If there's a known maintenance window coming up, no need to alert
                 let upcomingKnownMaintenance = false;
                 const lodestone = await fetch('https://lodestonenews.com/news/maintenance/current').then(response => response.json());
-                if(lodestone && lodestone.game && lodestone.game.some((maint) => {
+                if (lodestone && lodestone.game && lodestone.game.some((maint) => {
                     return (windowOpen > Date.parse(maint.start) && windowOpen < Date.parse(maint.end))
                 })) {
                     upcomingKnownMaintenance = true;
                 }
 
                 // set up some intervals in millis
-                const [intervalLong, intervalMedium, intervalShort, intervalImminent] = 
-                [
-                    1440 * 60 * 1000,  // 24 hours
-                    240 * 60 * 1000,   // 4 hours
-                    60 * 60 * 1000,    // 1 hour
-                    30 * 60 * 1000     // 30 minutes
-                ] 
+                const [intervalLong, intervalMedium, intervalShort, intervalImminent] =
+                    [
+                        1440 * 60 * 1000,  // 24 hours
+                        240 * 60 * 1000,   // 4 hours
+                        60 * 60 * 1000,    // 1 hour
+                        30 * 60 * 1000     // 30 minutes
+                    ]
 
                 let alertMessage;
                 if (diffMillis <= 0) { } // do nothing, should not happen
-                else if (diffMillis < intervalImminent) { 
-                    console.log('Preparing an "imminent" alert for %s at %s', fish, new Date().toUTCString()); 
+                else if (diffMillis < intervalImminent) {
+                    console.log('Preparing an "imminent" alert for %s at %s', fish, new Date().toUTCString());
                     const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 30m alert for: ')
-                    const contentString = upcomingKnownMaintenance ? 
+                    const contentString = upcomingKnownMaintenance ?
                         '🚧Maintenance🚧 a rare window would have been imminent..' :
                         `<@&${alertRole}> a rare window is imminent...`
-                    alertMessage = { content: contentString,
+                    alertMessage = {
+                        content: contentString,
                         embeds: [embed]
                     };
-                    messagesResume = windowOpen; 
-                } 
-                else if (diffMillis < intervalShort) { 
-                    console.log('Preparing  a "short" alert for %s at %s', fish, new Date().toUTCString()); 
+                    messagesResume = windowOpen;
+                }
+                else if (diffMillis < intervalShort) {
+                    console.log('Preparing  a "short" alert for %s at %s', fish, new Date().toUTCString());
                     const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 1h alert for: ')
-                    const contentString = upcomingKnownMaintenance ? 
+                    const contentString = upcomingKnownMaintenance ?
                         '🚧Maintenance🚧 a rare window would have been less than an hour away..' :
                         `<@&${alertRole}> a rare window is less than an hour away...`
-                    alertMessage = { content: contentString,
+                    alertMessage = {
+                        content: contentString,
                         embeds: [embed]
                     };
                     messagesResume = Date.now() + (diffMillis - intervalImminent);
                 }
-                else if (diffMillis < intervalMedium) { 
+                else if (diffMillis < intervalMedium) {
                     console.log('Preparing an "medium" alert for %s at %s', fish, new Date().toUTCString());
                     const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 4h alert for: ')
-                    const contentString = upcomingKnownMaintenance ? 
+                    const contentString = upcomingKnownMaintenance ?
                         '🚧Maintenance🚧 a rare window would have been less than four hours away..' :
                         `<@&${alertRole}> a rare window is less than four hours away...`
-                    alertMessage = { content: contentString,
+                    alertMessage = {
+                        content: contentString,
                         embeds: [embed]
                     };
                     messagesResume = Date.now() + (diffMillis - intervalShort);
                 }
-                else if (diffMillis < intervalLong) { 
-                    console.log('Preparing an "long" alert for %s at %s', fish, new Date().toUTCString()); 
+                else if (diffMillis < intervalLong) {
+                    console.log('Preparing an "long" alert for %s at %s', fish, new Date().toUTCString());
                     const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 24h alert for: ')
-                    const contentString = upcomingKnownMaintenance ? 
+                    const contentString = upcomingKnownMaintenance ?
                         '🚧Maintenance🚧 a rare window would have been less than a day away..' :
                         `<@&${alertRole}> a rare window is less than a day away...`
-                    alertMessage = { content: contentString,
+                    alertMessage = {
+                        content: contentString,
                         embeds: [embed]
                     };
                     messagesResume = Date.now() + (diffMillis - intervalMedium);
                 }
-                if(alertMessage) {
+                if (alertMessage) {
                     const channel = client.channels.cache.get(channelId);
                     channel.messages.fetch({ limit: 20 }).then(messages => {
                         // make sure the embed wasn't already sent before proceeding
-                        if(messages.size > 0 && messages.every(message => !(message.embeds[0] && message.embeds[0].equals(alertMessage.embeds[0])))) {
-                            channel.send(alertMessage)
+                        if (messages.size > 0 && messages.every(message => !(message.embeds[0] && message.embeds[0].equals(alertMessage.embeds[0])))) {
+                            channel.send(alertMessage).then((sent_alert) => {
+                                if (channel.type === ChannelType.GuildAnnouncement) {
+                                    sent_alert.crosspost()
+                                        .then(() => console.log('Crossposted message'))
+                                        .catch(console.error);
+                                }
+                            })
                         } else {
-                            console.log('Alert for %s at %s was not sent due to duplicate.', fish, new Date().toUTCString()); 
+                            console.log('Alert for %s at %s was not sent due to duplicate.', fish, new Date().toUTCString());
                         }
                     }).catch(console.error);
                 }
@@ -159,7 +169,7 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isStringSelectMenu()) return;
     // When a select menu interaction is created, we make sure the values parameter (all that gets passed)
     // carries along any data we need from prior menus.   This is done by having values be a comma separated list
-    const [selectValue, plotType] = interaction.values[0].split(',')    
+    const [selectValue, plotType] = interaction.values[0].split(',')
 
     if (interaction.customId === 'region' && !Array.isArray(DATA.SPOTS[selectValue])) {
         const row = new ActionRowBuilder()
@@ -168,11 +178,12 @@ client.on('interactionCreate', async interaction => {
                     .setCustomId('zone')
                     .setPlaceholder('Select Zone')
                     // ZONES
-                    .addOptions(Object.keys(DATA.SPOTS[selectValue]).map(key => { 
+                    .addOptions(Object.keys(DATA.SPOTS[selectValue]).map(key => {
                         return {
                             label: prettifySelectionKey(key),
                             value: [key, plotType].join(',')
-                        }})),
+                        }
+                    })),
             )
 
         const buttonRow = new ActionRowBuilder()
@@ -188,28 +199,29 @@ client.on('interactionCreate', async interaction => {
 
     // prepare options array to look ahead for singular choice zones
     let options = []
-    if(interaction.customId === 'zone') {
-        const regionKey = Object.keys(DATA.SPOTS).find(searchKey => selectValue in DATA.SPOTS[searchKey] )
+    if (interaction.customId === 'zone') {
+        const regionKey = Object.keys(DATA.SPOTS).find(searchKey => selectValue in DATA.SPOTS[searchKey])
         options = DATA.SPOTS[regionKey][selectValue]
-    } else if ( Array.isArray(DATA.SPOTS[selectValue]) ){
+    } else if (Array.isArray(DATA.SPOTS[selectValue])) {
         options = DATA.SPOTS[selectValue]
     }
 
     // Skip this if there's only one fishing spot in that zone
-    if (options.length != 1 
+    if (options.length != 1
         && (interaction.customId === 'zone' || Array.isArray(DATA.SPOTS[selectValue]))) {
-        
+
         const row = new ActionRowBuilder()
             .addComponents(
                 new StringSelectMenuBuilder()
                     .setCustomId('spot')
                     .setPlaceholder('Select Fishing Spot')
                     // SPOTS
-                    .addOptions(options.map(spot => { 
+                    .addOptions(options.map(spot => {
                         return {
                             label: spot[0],
-                            value: [(spot[0] + ';' + spot[1].toString()),plotType].join(',')
-                        }})),
+                            value: [(spot[0] + ';' + spot[1].toString()), plotType].join(',')
+                        }
+                    })),
 
             )
 
@@ -229,18 +241,18 @@ client.on('interactionCreate', async interaction => {
         await interaction.deferUpdate();
         let loadingCounter = 0
         const loadingInterval = setInterval(async () => {
-            await interaction.editReply({ content: '`Processing'+ '.'.repeat(loadingCounter) + '`', components: [] });
+            await interaction.editReply({ content: '`Processing' + '.'.repeat(loadingCounter) + '`', components: [] });
             loadingCounter = (loadingCounter + 1) % 4
-        },500)
+        }, 500)
 
         const interactionValue = (
-            (interaction.customId === 'zone' && options.length === 1)?
-            options[0]:
-            selectValue.split(';'))
+            (interaction.customId === 'zone' && options.length === 1) ?
+                options[0] :
+                selectValue.split(';'))
         const embed = new EmbedBuilder()
         let attachment
         try {
-            const bitetimes = await fetch('https://ff14-fish-plotter.fly.dev/bitetimes?'  + new URLSearchParams({
+            const bitetimes = await fetch('https://ff14-fish-plotter.fly.dev/bitetimes?' + new URLSearchParams({
                 spotId: interactionValue[1],
                 plotType: plotType || 'box',
             })).then(response => response.json());
@@ -248,29 +260,29 @@ client.on('interactionCreate', async interaction => {
             clearInterval(loadingInterval);
 
             // via discordjs documentation
-            const canvas = Canvas.createCanvas(614,351);
+            const canvas = Canvas.createCanvas(614, 351);
             const context = canvas.getContext('2d');
             const background = await Canvas.loadImage(bitetimes.plot);
 
             // This uses the canvas dimensions to stretch the image onto the entire canvas
             context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
-           // Use the helpful Attachment class structure to process the file for you
-           attachment = new AttachmentBuilder(canvas.toBuffer(), {name: 'buffered-image.png'});
+            // Use the helpful Attachment class structure to process the file for you
+            attachment = new AttachmentBuilder(canvas.toBuffer(), { name: 'buffered-image.png' });
 
-           embed.setColor('#1fa1e0')
-               .setAuthor({name: 'Bite times for fishing spot: ' + interactionValue[0], url: 'https://ffxivteamcraft.com/db/en/fishing-spot/' + interactionValue[1]})
-               .setDescription('`/bitetimes` executed by <@!' + interaction.member + '>')
-               .setImage('attachment://buffered-image.png')
-               .setFooter({text: 'Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime})
-       } catch {
-           clearInterval(loadingInterval)
-           embed.setColor('#1fa1e0')
-               .setAuthor({name: 'Error retrieving bite times for: ' + interactionValue[0]})
-               .setThumbnail('https://xivapi.com/i/001000/001135.png')
-               .setFooter({text: 'If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417' })
-       }
-   
+            embed.setColor('#1fa1e0')
+                .setAuthor({ name: 'Bite times for fishing spot: ' + interactionValue[0], url: 'https://ffxivteamcraft.com/db/en/fishing-spot/' + interactionValue[1] })
+                .setDescription('`/bitetimes` executed by <@!' + interaction.member + '>')
+                .setImage('attachment://buffered-image.png')
+                .setFooter({ text: 'Based on FFXIV Teamcraft by Miu#1568. Run time: ' + bitetimes.runtime })
+        } catch {
+            clearInterval(loadingInterval)
+            embed.setColor('#1fa1e0')
+                .setAuthor({ name: 'Error retrieving bite times for: ' + interactionValue[0] })
+                .setThumbnail('https://xivapi.com/i/001000/001135.png')
+                .setFooter({ text: 'If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417' })
+        }
+
         await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
         await interaction.editReply({ content: '`...Finished!`', components: [] });
     }
@@ -289,11 +301,12 @@ client.on('interactionCreate', async interaction => {
                     .setCustomId('region')
                     .setPlaceholder('Select Region')
                     // REGION
-                    .addOptions(Object.keys(DATA.SPOTS).map(key => { 
+                    .addOptions(Object.keys(DATA.SPOTS).map(key => {
                         return {
-                            label: prettifySelectionKey(key),  
-                            value: [key, plotType].join(',')}
-                        })),
+                            label: prettifySelectionKey(key),
+                            value: [key, plotType].join(',')
+                        }
+                    })),
             )
         const buttonRow = new ActionRowBuilder()
             .addComponents(
@@ -323,12 +336,12 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (commandName === 'timeline') {
-        await interaction.reply({ content: '`Starting...`', ephemeral: true});
+        await interaction.reply({ content: '`Starting...`', ephemeral: true });
         let loadingCounter = 0
         const loadingInterval = setInterval(async () => {
-            await interaction.editReply({ content: '`Processing'+ '.'.repeat(loadingCounter) + '`', components: [] });
+            await interaction.editReply({ content: '`Processing' + '.'.repeat(loadingCounter) + '`', components: [] });
             loadingCounter = (loadingCounter + 1) % 4
-        },500)
+        }, 500)
 
         const charName = interaction.options.getString('character_name');
         const charServer = interaction.options.getString('server');
@@ -338,19 +351,19 @@ client.on('interactionCreate', async interaction => {
         const embed = new EmbedBuilder()
         let attachment
         try {
-            const lodestone = await fetch('https://ff14-fish-plotter.fly.dev/character?'  + new URLSearchParams({
+            const lodestone = await fetch('https://ff14-fish-plotter.fly.dev/character?' + new URLSearchParams({
                 name: charName,
                 server: charServer,
             })).then(response => response.json());
-            const timeline = await fetch('https://ff14-fish-plotter.fly.dev/timeline?'  + new URLSearchParams({
-                charId: lodestone.charId, 
+            const timeline = await fetch('https://ff14-fish-plotter.fly.dev/timeline?' + new URLSearchParams({
+                charId: lodestone.charId,
                 achievement: achievement,
                 exceptRanks: except_ranks
             })).then(response => response.json());
-            
+
             clearInterval(loadingInterval);
             // via discordjs documentation
-            const canvas = Canvas.createCanvas(614,351);
+            const canvas = Canvas.createCanvas(614, 351);
             const context = canvas.getContext('2d');
             const background = await Canvas.loadImage(timeline.plot);
 
@@ -358,30 +371,31 @@ client.on('interactionCreate', async interaction => {
             context.drawImage(background, 0, 0, canvas.width, canvas.height);
 
             // Use the helpful Attachment class structure to process the file for you
-            attachment = new AttachmentBuilder(canvas.toBuffer(), {name: 'buffered-image2.png'});
+            attachment = new AttachmentBuilder(canvas.toBuffer(), { name: 'buffered-image2.png' });
 
             embed.setColor('#1fa1e0')
                 //.setTitle(achievement)
                 .setAuthor({
                     name: achievement,
                     iconURL: timeline.img,
-                    url: 'https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.charId + '/achievement/category/34/#anchor_achievement'})
-                .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **'+ toTitleCase(charName) + ' ('+ toTitleCase(charServer) +')**')
+                    url: 'https://na.finalfantasyxiv.com/lodestone/character/' + lodestone.charId + '/achievement/category/34/#anchor_achievement'
+                })
+                .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **' + toTitleCase(charName) + ' (' + toTitleCase(charServer) + ')**')
                 .setImage('attachment://buffered-image2.png')
                 //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.charId + '/achievement/category/34/#anchor_achievement')
-                .setFooter({text: 'Based on public Lodestone data.  Run time: ' + timeline.runtime})
+                .setFooter({ text: 'Based on public Lodestone data.  Run time: ' + timeline.runtime })
 
             await wait(1000)
             await interaction.followUp({ components: [], embeds: [embed], files: (typeof attachment === "undefined" ? [] : [attachment]) });
             await wait(7000)
             await interaction.editReply({ content: '`...Finished!`', components: [] });
 
-        } catch(e) {
+        } catch (e) {
             console.log(e)
             clearInterval(loadingInterval);
             await interaction.editReply({ content: 'Encountered an error running `/timeline`.  Please double check that the character has the achievement and has Lodestone profile public.  If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417', components: [] });
         }
-        
+
     }
 });
 
