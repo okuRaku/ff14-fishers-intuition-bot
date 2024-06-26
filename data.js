@@ -344,22 +344,34 @@ module.exports = DATA = {
                 ["The Norvrandt Slope", 236]
             ]
         },
-        // "the_endeavor": [
-        //         ["Outer Galadion Bay",237],
-        //         ["Galadion Spectral Current",238],
-        //         ["The Southern Strait of Merlthor",239],
-        //         ["Southern Merlthor Spectral Current",240],
-        //         ["The Northern Straight of Merlthor",243],
-        //         ["Northern Merlthor Spectral Current",244],
-        //         ["Open Rhotano Sea",241],
-        //         ["Rhotano Spectral Current",242],
-        //         ["Cieldalaes Margin",246],
-        //         ["Cieldalaes Spectral Current",247],
-        //         ["Open Bloodbrine Sea",248],
-        //         ["Bloodbrine Spectral Current",249],
-        //         ["Outer Rothlyt Sound",250],
-        //         ["Rothlyt Spectral Current",251]
-        // ]
+        "the_endeavor": {
+            "indigo": [
+                ["Outer Galadion Bay",237],
+                ["Galadion Spectral Current",238],
+                ["The Southern Strait of Merlthor",239],
+                ["Southern Merlthor Spectral Current",240],
+                ["The Northern Straight of Merlthor",243],
+                ["Northern Merlthor Spectral Current",244],
+                ["Open Rhotano Sea",241],
+                ["Rhotano Spectral Current",242],
+                ["Cieldalaes Margin",246],
+                ["Cieldalaes Spectral Current",247],
+                ["Open Bloodbrine Sea",248],
+                ["Bloodbrine Spectral Current",249],
+                ["Outer Rothlyt Sound",250],
+                ["Rothlyt Spectral Current",251]    
+            ],
+            "ruby": [
+                ["Open Sirensong Sea",286],
+                ["Sirensong Spectral Current",287],
+                ["Kugane Coast",288],
+                ["Kugane Spectral Current",289],
+                ["Open Ruby Sea",290],
+                ["Ruby Spectral Current",291],
+                ["Lower One River",292],
+                ["One River Spectral Current",293],
+            ]
+        },
         "the_northern_empty": {
             "old_sharlayan": [
                 ["Scholar's Harbor", 252],
@@ -418,5 +430,31 @@ module.exports = DATA = {
                 ["Lethe", 277],
             ]
         }
+    },
+    WEATHER: {
+        "1":"<:ClearSkies:851663994221101056>",
+        "2":"<:FairSkies:851664007797538827>",
+        "3":"<:Clouds:851664021245657138>",
+        "4":"<:Fog:851664041755934770>",
+        "5":"<:Wind:851664064131498024>",
+        "6":"<:Gales:851664086759637073>",
+        "7":"<:Rain:851664159501582376>",
+        "8":"<:Showers:851664185146605659>",
+        "9":"<:Thunder:851664214325329952>",
+        "10":"<:Thunderstorms:851664235971870781>",
+        "11":"<:DustStorms:851664257992491018>",
+        "14":"<:HeatWaves:851664314817052691>",
+        "15":"<:Snow:851664342012133416>",
+        "16":"<:Blizzards:851664359695450133>",
+        "17":"<:Gloom:851664378435731476>",
+        "49":"<:UmbralWind:1254083874103754792>",
+        "148":"<:MoonDust:919687727287521340>",
+        "149":"<:AstromagneticStorm:919687726977122385>",
+    },
+    OCEAN_TIME: {
+        "0":"Any",
+        "1":"Sunset",
+        "2":"Day",
+        "3":"Night",
     }
 }

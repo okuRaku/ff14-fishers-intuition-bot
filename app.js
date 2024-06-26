@@ -1,5 +1,6 @@
-const { ChannelType, Client, Events, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { Client, Events, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const Canvas = require('canvas');
+const Fuse = require('fuse.js')
 
 // const { token, channelIds, alertRoles } = require('./config.json');
 const [token, channelIds, alertRoles] = [process.env.TOKEN, JSON.parse(process.env.ALERT_CHANNEL_IDS), JSON.parse(process.env.ALERT_ROLES)]
@@ -9,9 +10,10 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const DATA = require('./data.js')
 
 const wait = require('util').promisify(setTimeout);
-const cron = require('node-cron');
 
 const windows = require('./windows');
+const rareAlerts = require('./rare-alerts');
+const fishGuide = require('./fish-guide');
 
 const prettifySelectionKey = (keyString) => {
     return keyString.replace(/(^\w{1})|(\s+\w{1})|(_+\w{1})/g, letter => letter.toUpperCase()).replaceAll('_', ' ')
@@ -25,136 +27,45 @@ const toTitleCase = (phrase) => {
         .join(' ');
 };
 
+const getFishId = (fishString, guide) => {
+    const fuse = new Fuse(Object.keys(guide).map(key => {
+        return {
+            name: guide[key].name,
+            id: key
+        }
+    }), {keys:['name']})
+    return fuse.search(fishString)[0].item.id
+}
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.once(Events.ClientReady, c => {
     console.log('Ready!');
 });
 
 // Following is a background process, designed to check periodically whether a small set of the rarest fish are coming up soon, and message a configured channel if so
-const windowCache = {}
-const updateRareWindowCache = async (fish) => {
-    console.log('!!!! Updating window cache for %s at %s', fish, new Date().toUTCString())
-    const rareWindowData = await windows.getWindowsForFish(fish)
-    windowCache[fish] = rareWindowData
-}
-const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
-    let messagesResume = 0;
-    let windowOpen = 0;
-    let diffMillis = 0;
-    // run once to initialize
-    updateRareWindowCache(fish).then(() => {
-        cron.schedule(`${fish.charCodeAt(0) % 10} */8 * * *`, async () => {
-            updateRareWindowCache(fish)
-        });
-
-        const task = cron.schedule('15,30,45,0 * * * *', async () => {
-            console.log('Checking %s at %s', fish, new Date().toUTCString())
-            if (Date.now() > messagesResume && !("DISABLE_ALERTS" in process.env && process.env.DISABLE_ALERTS === "true")) {
-
-                windowCache[fish].availability = windowCache[fish].availability.filter(x => x.start > Date.now())
-
-                // nextWindowIndex = windowCache[fish].availability.findIndex((x) => x.start > Date.now())
-                windowOpen = windowCache[fish].availability[0].start
-                diffMillis = (windowOpen - Date.now())
-
-                // If there's a known maintenance window coming up, no need to alert
-                let upcomingKnownMaintenance = false;
-                const lodestone = await fetch('https://lodestonenews.com/news/maintenance/current').then(response => response.json());
-                if (lodestone && lodestone.game && lodestone.game.some((maint) => {
-                    return (windowOpen > Date.parse(maint.start) && windowOpen < Date.parse(maint.end))
-                })) {
-                    upcomingKnownMaintenance = true;
-                }
-
-                // set up some intervals in millis
-                const [intervalLong, intervalMedium, intervalShort, intervalImminent] =
-                    [
-                        1440 * 60 * 1000,  // 24 hours
-                        240 * 60 * 1000,   // 4 hours
-                        60 * 60 * 1000,    // 1 hour
-                        30 * 60 * 1000     // 30 minutes
-                    ]
-
-                let alertMessage;
-                if (diffMillis <= 0) { } // do nothing, should not happen
-                else if (diffMillis < intervalImminent) {
-                    console.log('Preparing an "imminent" alert for %s at %s', fish, new Date().toUTCString());
-                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 30m alert for: ')
-                    const contentString = upcomingKnownMaintenance ?
-                        '🚧Maintenance🚧 a rare window would have been imminent..' :
-                        `<@&${alertRole}> a rare window is imminent...`
-                    alertMessage = {
-                        content: contentString,
-                        embeds: [embed]
-                    };
-                    messagesResume = windowOpen;
-                }
-                else if (diffMillis < intervalShort) {
-                    console.log('Preparing  a "short" alert for %s at %s', fish, new Date().toUTCString());
-                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 1h alert for: ')
-                    const contentString = upcomingKnownMaintenance ?
-                        '🚧Maintenance🚧 a rare window would have been less than an hour away..' :
-                        `<@&${alertRole}> a rare window is less than an hour away...`
-                    alertMessage = {
-                        content: contentString,
-                        embeds: [embed]
-                    };
-                    messagesResume = Date.now() + (diffMillis - intervalImminent);
-                }
-                else if (diffMillis < intervalMedium) {
-                    console.log('Preparing an "medium" alert for %s at %s', fish, new Date().toUTCString());
-                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 4h alert for: ')
-                    const contentString = upcomingKnownMaintenance ?
-                        '🚧Maintenance🚧 a rare window would have been less than four hours away..' :
-                        `<@&${alertRole}> a rare window is less than four hours away...`
-                    alertMessage = {
-                        content: contentString,
-                        embeds: [embed]
-                    };
-                    messagesResume = Date.now() + (diffMillis - intervalShort);
-                }
-                else if (diffMillis < intervalLong) {
-                    console.log('Preparing an "long" alert for %s at %s', fish, new Date().toUTCString());
-                    const embed = await windows.buildEmbed(fish, 1, true, true, false, windowCache[fish], 'Under 24h alert for: ')
-                    const contentString = upcomingKnownMaintenance ?
-                        '🚧Maintenance🚧 a rare window would have been less than a day away..' :
-                        `<@&${alertRole}> a rare window is less than a day away...`
-                    alertMessage = {
-                        content: contentString,
-                        embeds: [embed]
-                    };
-                    messagesResume = Date.now() + (diffMillis - intervalMedium);
-                }
-                if (alertMessage) {
-                    const channel = client.channels.cache.get(channelId);
-                    channel.messages.fetch({ limit: 20 }).then(messages => {
-                        // make sure the embed wasn't already sent before proceeding
-                        if (messages.size > 0 && messages.every(message => !(message.embeds[0] && message.embeds[0].equals(alertMessage.embeds[0])))) {
-                            channel.send(alertMessage).then((sent_alert) => {
-                                if (channel.type === ChannelType.GuildAnnouncement) {
-                                    sent_alert.crosspost()
-                                        .then(() => console.log('Crossposted message'))
-                                        .catch(console.error);
-                                }
-                            })
-                        } else {
-                            console.log('Alert for %s at %s was not sent due to duplicate.', fish, new Date().toUTCString());
-                        }
-                    }).catch(console.error);
-                }
-            } else {
-                console.log('Task ran, but messages paused till %s for %s at %s', new Date(messagesResume).toUTCString(), fish, new Date().toUTCString());
-            }
-        });
-    })
-}
-
 // start processes for these three rarest fish for now
 channelIds.forEach(chan => {
-    rareFishBackgroundChecker('The Ruby Dragon', chan, alertRoles[chan]["ruby"])
-    rareFishBackgroundChecker('Cinder Surprise', chan, alertRoles[chan]["cinder"])
-    rareFishBackgroundChecker('Ealad Skaan', chan, alertRoles[chan]["ealad"])
+    rareAlerts.rareFishBackgroundChecker('The Ruby Dragon', chan, alertRoles[chan]["ruby"])
+    rareAlerts.rareFishBackgroundChecker('Cinder Surprise', chan, alertRoles[chan]["cinder"])
+    rareAlerts.rareFishBackgroundChecker('Ealad Skaan', chan, alertRoles[chan]["ealad"])
 })
+
+// Also at startup populate the fish guide data, TC item names, Lodinn stats
+let cachedFishGuides = {}
+let cachedTCItems = {}
+let cachedLodinnStats = {}
+fishGuide.populateXivApiData().then(populated => cachedFishGuides = populated)
+fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/items.json')
+    .then(response => response.json().then(json => {
+        cachedTCItems = json
+        console.log(`Cached ${Object.keys(json).length} items from Teamcraft`)
+    }))
+fetch('https://lodinn.github.io/assets/big_fish_stats_v5.json')
+    .then(response => response.json().then(json => {
+        cachedLodinnStats = json
+        console.log(`Cached ${Object.keys(json).length} items from Lodinn's stats`)
+    }))
+
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
@@ -396,6 +307,30 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({ content: 'Encountered an error running `/timeline`.  Please double check that the character has the achievement and has Lodestone profile public.  If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417', components: [] });
         }
 
+    }
+
+    if (commandName === 'fishguide') {
+        await interaction.deferReply();
+        const fish = interaction.options.getString('fish');
+        try {
+            const fishId = getFishId(fish, cachedFishGuides)
+            await fishGuide.populateAllaganReportsData(fishId, cachedFishGuides)
+
+            if(interaction.options.getBoolean('fruity_guide')) {
+                interaction.editReply({
+                    content: cachedFishGuides[fishId].fruityVideo,
+                });
+            } else {
+                const embed = await fishGuide.buildEmbed(fishId, cachedFishGuides, cachedTCItems, cachedLodinnStats)
+                interaction.editReply({
+                    embeds: [embed]
+                });
+            }
+            
+        } catch(e) {
+            console.log(e)
+            await interaction.editReply({ content: 'Encountered an error running `/fishguide`.  Please double check that the fish has data on Teamcraft.  If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417', components: [] });
+        }
     }
 });
 
