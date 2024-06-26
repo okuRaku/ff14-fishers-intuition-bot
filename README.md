@@ -52,6 +52,23 @@ Display a timeseries chart for a given fishing achievement.  Server component re
 
 ![Demo of /timeline](screenshot2.png "timeline")
 
+## `/fishguide`
+
+Fish Guide style statistics for any fish in the game.  Based on static data from the game and collected reports and analysis from the community.
+
+**fish**: String.  Required.  Desired fish. Has some flexiblity but try to match the name closely.
+```
+/windows fish:Aquamaton
+```
+
+**fruity_guide**:  Boolean. Optional.  In this optional mode, only the Fruity Snacks video guide will be retrieved.
+
+```
+/windows fish:Aquamaton fruity_guide:True
+```
+
+![Demo of /fishguide](screenshot3.png "fishguide")
+
 
 
 *FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.

@@ -52,7 +52,7 @@ const commands = [
         .addStringOption(option => option.setName('character_name').setRequired(true).setDescription('Character name.'))
         .addStringOption(option => option.setName('server').setRequired(true).setDescription('Character\'s server.'))
         .addStringOption(option => option.setName('achievement').setRequired(true).setDescription('Achievement to chart.').addChoices(
-            { name:'Good Things Come to Those Who Bait: La Noscea', value: 'Good Things Come to Those Who Bait: La Noscea' },
+            { name: 'Good Things Come to Those Who Bait: La Noscea', value: 'Good Things Come to Those Who Bait: La Noscea' },
             { name: 'Good Things Come to Those Who Bait: Black Shroud', value: 'Good Things Come to Those Who Bait: Black Shroud' },
             { name: 'Good Things Come to Those Who Bait: Thanalan', value: 'Good Things Come to Those Who Bait: Thanalan' },
             { name: 'Baiting <Expansion>', value: 'Baiting' },
@@ -60,6 +60,7 @@ const commands = [
             { name: 'The One That Didn\'t Get Away', value: 'The One That Didn\'t Get Away' },
             { name: 'Go Big or Go Home', value: 'Go Big or Go Home' },
             { name: 'Go Big Far from Home', value: 'Go Big Far from Home' },
+            { name: 'Go Big Till the End', value: 'Go Big Till the End' },
             { name: 'Skyward Rod', value: 'Skyward Rod' },
             { name: 'Dauntless Treader', value: 'Dauntless Treader' },
             { name: 'Specters of <Location>', value: 'Specters of' },
@@ -67,13 +68,19 @@ const commands = [
             { name: 'On a Boat', value: 'On a Boat' },
             { name: 'No More Fish in the Sea', value: 'No More Fish in the Sea' },
         ))
-        .addStringOption(option => option.setName('except_ranks').setRequired(false).setDescription('Advanced: Give a comma separated list of ranks to exclude from the plot, e.g. 2,3'))
-        
+        .addStringOption(option => option.setName('except_ranks').setRequired(false).setDescription('Advanced: Give a comma separated list of ranks to exclude from the plot, e.g. 2,3')),
+    new SlashCommandBuilder().setName('fishguide')
+        .setDescription(
+            '(BETA) Fish details collected from in-game data as well as player recording and analysis.')
+        .addStringOption(option => option.setName('fish').setRequired(true).setDescription('Desired fish. Has some flexiblity but try to match the name closely.'))
+        .addBooleanOption(option => option.setName('fruity_guide').setRequired(false).setDescription('In this optional mode, only the Fruity Snacks video guide will be retrieved.'))
+
 ]
     .map(command => command.toJSON());
 
 const rest = new REST({ version: '9' }).setToken(token);
 
-rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
+rest.put(Routes.applicationCommands(clientId), { body: commands })
+// rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
     .then(() => console.log('Successfully registered application commands.'))
     .catch(console.error);
