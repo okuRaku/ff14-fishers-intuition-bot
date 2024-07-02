@@ -45,9 +45,9 @@ client.once(Events.ClientReady, c => {
 // Following is a background process, designed to check periodically whether a small set of the rarest fish are coming up soon, and message a configured channel if so
 // start processes for these three rarest fish for now
 channelIds.forEach(chan => {
-    rareAlerts.rareFishBackgroundChecker('The Ruby Dragon', chan, alertRoles[chan]["ruby"])
-    rareAlerts.rareFishBackgroundChecker('Cinder Surprise', chan, alertRoles[chan]["cinder"])
-    rareAlerts.rareFishBackgroundChecker('Ealad Skaan', chan, alertRoles[chan]["ealad"])
+    rareAlerts.rareFishBackgroundChecker('The Ruby Dragon', chan, alertRoles[chan]["ruby"], client)
+    rareAlerts.rareFishBackgroundChecker('Cinder Surprise', chan, alertRoles[chan]["cinder"], client)
+    rareAlerts.rareFishBackgroundChecker('Ealad Skaan', chan, alertRoles[chan]["ealad"], client)
 })
 
 // Also at startup populate the fish guide data, TC item names, Lodinn stats
@@ -293,6 +293,7 @@ client.on('interactionCreate', async interaction => {
                 })
                 .setDescription('`/timeline` executed by <@!' + interaction.member + '> for **' + toTitleCase(charName) + ' (' + toTitleCase(charServer) + ')**')
                 .setImage('attachment://buffered-image2.png')
+                .setThumbnail(lodestone.avatar)
                 //.setURL('https://na.finalfantasyxiv.com/lodestone/character/'+ lodestone.charId + '/achievement/category/34/#anchor_achievement')
                 .setFooter({ text: 'Based on public Lodestone data.  Run time: ' + timeline.runtime })
 
