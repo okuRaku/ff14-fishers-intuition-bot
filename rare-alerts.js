@@ -9,7 +9,7 @@ const updateRareWindowCache = async (fish) => {
     const rareWindowData = await windows.getWindowsForFish(fish)
     windowCache[fish] = rareWindowData
 }
-const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
+const rareFishBackgroundChecker = (fish, channelId, alertRole, client) => {
     let messagesResume = 0;
     let windowOpen = 0;
     let diffMillis = 0;
@@ -101,7 +101,11 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole) => {
                     const channel = client.channels.cache.get(channelId);
                     channel.messages.fetch({ limit: 20 }).then(messages => {
                         // make sure the embed wasn't already sent before proceeding
-                        if (messages.size > 0 && messages.every(message => !(message.embeds[0] && message.embeds[0].equals(alertMessage.embeds[0])))) {
+                        if (messages.size > 0 && messages.every(message => {
+                            if (!(message.embeds && message.embeds[0])) return true
+                            return !(JSON.stringify(message.embeds[0].fields[0]) == JSON.stringify(alertMessage.embeds[0].data.fields[0])
+                                && JSON.stringify(message.embeds[0].author.name) == JSON.stringify(alertMessage.embeds[0].data.author.name))
+                        })) {
                             channel.send(alertMessage).then((sent_alert) => {
                                 if (channel.type === ChannelType.GuildAnnouncement) {
                                     sent_alert.crosspost()
