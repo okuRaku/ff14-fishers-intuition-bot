@@ -13,12 +13,12 @@ const timeConverter = (spawn, duration) => {
     }
 }
 
-const spotLookupById = (id) => {
-    const spots = Object.values(DATA.SPOTS)
-        .flatMap(region => Object.values(region).flatMap(area => area));
-    const spot = spots.find(spot => spot[1] === id);
-    return spot ? spot[0] : null;
-}
+// const spotLookupById = (id) => {
+//     const spots = Object.values(DATA.SPOTS)
+//         .flatMap(region => Object.values(region).flatMap(area => area));
+//     const spot = spots.find(spot => spot[1] === id);
+//     return spot ? spot[0] : null;
+// }
 
 const buildWeatherString = (weathersFrom, weathers) => {
     weathersFromEmotified = weathersFrom?.map(w => DATA.WEATHER[w]).join(' ')
@@ -29,6 +29,10 @@ const buildWeatherString = (weathersFrom, weathers) => {
 
 const buildIntuitionString = (predators, cachedTCItems) => {
     return predators.map(p => `${p.amount}x ${cachedTCItems[p.id].en}`).join('\n')
+}
+
+const buildSpotString = (spotId, cachedSpotData) => {
+    return `${cachedSpotData[spotId].en} (${cachedSpotData[spotId].x}, ${cachedSpotData[spotId].y})`
 }
 
 const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
@@ -105,7 +109,8 @@ const populateXivApiData = async () => {
                 "Item.IsCollectable"
             ].join(','),
             limit: 500,
-            after: Math.max(0, (i * 500) - 1)
+            after: Math.max(0, (i * 500) - 1),
+            schema: "exdschema@7.0"
 
         })).then(response => response.json());
         if (allFishParameters.code === 404) break;
@@ -121,7 +126,7 @@ const populateXivApiData = async () => {
                 icon: fish.fields.Item.fields.Icon.path_hr1,
                 collectable: fish.fields.Item.fields.IsCollectable,
                 printIcon: (fish.fields.Item.fields.Icon.path.replace(/(\/\d)2(\d+\/\d)2(\d+)/, '$17$27$3')),
-                guide: fish.fields.Text,
+                guide: fish.fields.Text == ''? 'TBD' : fish.fields.Text,
                 folklore: fish.fields.GatheringSubCategory.fields?.FolkloreBook,
             }
             return acc
@@ -137,7 +142,7 @@ const populateXivApiData = async () => {
 module.exports = {
     populateXivApiData: populateXivApiData,
     populateAllaganReportsData: populateAllaganReportsData,
-    buildEmbed: async (fishId, cachedFishGuides, cachedTCItems, cachedLodinnStats) => {
+    buildEmbed: async (fishId, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData) => {
         const embed = new EmbedBuilder()
         try {
             const fishGuide = cachedFishGuides[fishId]
@@ -157,7 +162,7 @@ module.exports = {
 
             embed.addFields({ name: 'Preferred Bait', value: `${(fishGuide.bait in cachedFishGuides) ? '<:Mooch:851647291122122772>' : '<:Bait:851646932442939394>'} ${cachedTCItems[fishGuide.bait].en}`, inline: true })
             embed.addFields({ name: 'Tug & Hookset', value: `${fishGuide.tug} ${fishGuide.hookset}`, inline: true })
-            embed.addFields({ name: 'Prime Locations', value: `${fishGuide.spots.map(s => spotLookupById(s)).join('\n')}`, inline: true })
+            embed.addFields({ name: 'Prime Locations', value: `${fishGuide.spots.map(s => buildSpotString(s, cachedSpotData)).join('\n')}`, inline: true })
             embed.addFields({ name: 'Weather', value: fishGuide.weathers?.length > 0? buildWeatherString(fishGuide.weathersFrom, fishGuide.weathers):'Any', inline: true })
             if (('spawn' in fishGuide && fishGuide.spawn != undefined) && ('duration' in fishGuide && fishGuide.duration != undefined) ) {
                 const times = timeConverter(fishGuide.spawn, fishGuide.duration)
@@ -224,9 +229,9 @@ module.exports = {
         } catch (e) {
             console.log(e)
             embed.setColor('#1fa1e0')
-                .setTitle('Trouble building guide for: ' + cachedFishGuides[fishId].name)
+                .setTitle('Incomplete data for: ' + cachedFishGuides[fishId].name)
                 .setThumbnail('https://xivapi.com/i/001000/001135.png')
-                .setFooter({ text: 'If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417' })
+                .setFooter({ text: 'If you believe this may be in error, please @mention okuRaku#1417' })
                 .setURL('https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(cachedFishGuides[fishId].name))
         }
         return embed
