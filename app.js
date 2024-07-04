@@ -54,6 +54,7 @@ channelIds.forEach(chan => {
 let cachedFishGuides = {}
 let cachedTCItems = {}
 let cachedLodinnStats = {}
+let cachedSpotData = {}
 fishGuide.populateXivApiData().then(populated => cachedFishGuides = populated)
 fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/items.json')
     .then(response => response.json().then(json => {
@@ -64,6 +65,34 @@ fetch('https://lodinn.github.io/assets/big_fish_stats_v5.json')
     .then(response => response.json().then(json => {
         cachedLodinnStats = json
         console.log(`Cached ${Object.keys(json).length} items from Lodinn's stats`)
+    }))
+
+fetch('https://beta.xivapi.com/api/1/sheet/FishingSpot?limit=500&schema=exdschema@7.0&fields=PlaceName.Name@ja,PlaceName.Name@en,PlaceName.Name@fr,PlaceName.Name@de')
+    .then(response => response.json().then(xivSpotJson => {
+        // console.log(xivSpotJson)
+        fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/fishing-spots.json')
+            .then(response => response.json().then(json => {
+                json.map(spot => {
+                    const xivSpot = xivSpotJson.rows.find(s => s.row_id === spot.id)
+                    let x = undefined
+                    let y = undefined
+                    if(spot.coords) {
+                        x = spot.coords.x
+                        y = spot.coords.y
+                        x = +x.toFixed(1)
+                        y = +y.toFixed(1)
+                    }
+                    cachedSpotData[spot.id] = {
+                        x: x,
+                        y: y,
+                        en: xivSpot.fields.PlaceName.fields["Name"],
+                        ja: xivSpot.fields.PlaceName.fields["Name@ja"],
+                        fr: xivSpot.fields.PlaceName.fields["Name@fr"],
+                        de: xivSpot.fields.PlaceName.fields["Name@de"]
+                    }
+                })
+                console.log(`Cached ${Object.keys(cachedSpotData).length} fishing spots`)
+            }))
     }))
 
 
@@ -322,7 +351,7 @@ client.on('interactionCreate', async interaction => {
                     content: cachedFishGuides[fishId].fruityVideo,
                 });
             } else {
-                const embed = await fishGuide.buildEmbed(fishId, cachedFishGuides, cachedTCItems, cachedLodinnStats)
+                const embed = await fishGuide.buildEmbed(fishId, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData)
                 interaction.editReply({
                     embeds: [embed]
                 });

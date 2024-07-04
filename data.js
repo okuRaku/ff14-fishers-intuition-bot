@@ -429,7 +429,71 @@ module.exports = DATA = {
                 ["The Lower Hungering Gardens", 276],
                 ["Lethe", 277],
             ]
-        }
+        },
+        "yak_tural": {
+            "tuliyollal": [
+                ["Downripple", 294],
+                ["The For'ard Cabins", 295],
+                ["High Tide Harbor", 296]
+            ],
+            "urqopacha": [
+                ["Sunken Stars", 297],
+                ["Chirwagur Lake", 298],
+                ["Karvarhur the First", 299]
+            ],
+            "kozamauka": [
+                ["Bopo'uihih", 300],
+                ["Waters Hanu", 301],
+                ["Miyakabek'zu", 302],
+                ["The Dewspun Bank", 303],
+                ["Peaks Poga", 304],
+                ["Ku'uxage", 305],
+                ["Miyakabek'zoma", 306],
+                ["Marsh Ligaka", 307],
+            ],
+            "yak_tel": [
+                ["Xd'aa Talat Tsoly", 308],
+                ["Iq Br'aax Reservoir", 309],
+                ["Yak Awak Tsoly", 310],
+                ["Iq Rrax Tsoly", 311],
+                ["Xobr'it Tsoly", 312],
+                ["Ankledeep", 313],
+                ["Cenote Moxutural", 314],
+                ["Cenote Jayunja", 315],
+                ["Sapsweet Cenote", 316],
+                ["Bitterbark Cenote", 317],
+                ["Xty'iinbek Tsoly", 318]
+            ]
+        },
+        "xak_tural": {
+            "shaaloani": [
+                ["Niikwerepi", 319],
+                ["Lake Toari", 320],
+                ["Westbound Zorgor", 321],
+                ["Eastbound Zorgor", 322],
+            ],
+            "heritage_found": [
+                ["Outskirts Shallows", 323],
+                ["The Driftdowns", 324],
+                ["Crackling Canyons", 325],
+                ["Alexandrian Ruins", 326],
+            ],
+            "solution_nine": [
+                ["Residential Sector", 327]
+            ]
+        },
+        "unlost_world": {
+            "living_memory": [
+                ["The Knowable", 328],
+                ["Mu Springs Eternal", 329],
+                ["Leynode Aero", 330],
+                ["Canal Town South", 331],
+                ["Canal Town North", 332],
+                ["Proto Alexandria", 333],
+            ],
+        },
+            
+        
     },
     WEATHER: {
         "1":"<:ClearSkies:851663994221101056>",
@@ -448,6 +512,7 @@ module.exports = DATA = {
         "16":"<:Blizzards:851664359695450133>",
         "17":"<:Gloom:851664378435731476>",
         "49":"<:UmbralWind:1254083874103754792>",
+        "50":"<:UmbralStatic:1258379964852605029>",
         "148":"<:MoonDust:919687727287521340>",
         "149":"<:AstromagneticStorm:919687726977122385>",
     },
