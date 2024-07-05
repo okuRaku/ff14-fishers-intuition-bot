@@ -1,0 +1,19 @@
+{
+    "Preferred Bait": "代表的な釣り餌",
+    "Tug & Hookset": "食いつき・引っ掛け",
+    "Prime Locations": "代表的な釣り場",
+    "Min Gathering": "必要獲得力",
+    "Intuition Requirements": "直感付与条件",
+    "Mooch Details": "泳がせ釣り順番",
+    "Bait":"餌",
+    "Tug":"食いつき",
+    "Hookset":"引っ掛け",
+    "Weather":"天候",
+    "Time":"時間",
+    "Always Up": "常時",
+    "Est. slip rate":"逃走確率推測",
+    "Est. bite rate":"食いつき確率推測",
+    "Bite times":"食いつき時刻",
+    "Incomplete data for": "データが現在不足",
+    "ErrorMentionText": "誤りがあればどうぞ @mention okuRaku#1417をお願いします"
+}
