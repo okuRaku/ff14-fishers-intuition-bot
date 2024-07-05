@@ -30,10 +30,13 @@ const toTitleCase = (phrase) => {
 const getFishId = (fishString, guide) => {
     const fuse = new Fuse(Object.keys(guide).map(key => {
         return {
-            name: guide[key].name,
+            name: guide[key].name.en,
+            nameja: guide[key].name.ja,
+            namefr: guide[key].name.fr,
+            namede: guide[key].name.de,
             id: key
         }
-    }), {keys:['name']})
+    }), {keys:['name', 'nameja', 'namefr', 'namede']})
     return fuse.search(fishString)[0].item.id
 }
 
@@ -342,8 +345,18 @@ client.on('interactionCreate', async interaction => {
     if (commandName === 'fishguide') {
         await interaction.deferReply();
         const fish = interaction.options.getString('fish');
+        const locale = interaction.options.getString('language')? interaction.options.getString('language') :  (() => {
+            switch(interaction.locale) {
+                case 'en-GB': return "en";
+                case 'en-US': return "en";
+                case 'ja': return "ja";
+                case 'de': return "de";
+                case 'fr': return "fr";
+                default: return "en";
+            }
+          })();
         try {
-            const fishId = getFishId(fish, cachedFishGuides)
+            const fishId = getFishId(fish, cachedFishGuides, locale)
             await fishGuide.populateAllaganReportsData(fishId, cachedFishGuides)
 
             if(interaction.options.getBoolean('fruity_guide')) {
@@ -351,7 +364,7 @@ client.on('interactionCreate', async interaction => {
                     content: cachedFishGuides[fishId].fruityVideo,
                 });
             } else {
-                const embed = await fishGuide.buildEmbed(fishId, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData)
+                const embed = await fishGuide.buildEmbed(fishId, locale, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData)
                 interaction.editReply({
                     embeds: [embed]
                 });

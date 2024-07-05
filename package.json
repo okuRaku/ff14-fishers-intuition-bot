@@ -9,6 +9,7 @@
     "discord-api-types": "^0.37.33",
     "discord.js": "^14.9.0",
     "fuse.js": "^7.0.0",
+    "i18n": "^0.15.1",
     "node-cron": "^3.0.0",
     "node-fetch": "^3.0.0"
   },

@@ -73,6 +73,21 @@ const commands = [
         .setDescription(
             '(BETA) Fish details collected from in-game data as well as player recording and analysis.')
         .addStringOption(option => option.setName('fish').setRequired(true).setDescription('Desired fish. Has some flexiblity but try to match the name closely.'))
+        .addStringOption(option => option.setName('language').setNameLocalizations({
+                ja: '言語',
+                de: 'sprache',
+                fr: 'langue'
+            }).setRequired(false).setDescription('Optionally select language.').setDescriptionLocalizations({
+                ja: '(任意)言語を強制的に設定する。',
+                de: 'Wählen Sie optional die Sprache aus.',
+                fr: 'Sélectionnez éventuellement la langue.'
+            })
+            .addChoices(
+                { name: 'English', value: 'en', name_localizations: {ja: '英語', de: 'Englisch', fr: 'Anglais'}},
+                { name: 'Japanese', value: 'ja', name_localizations: {ja: '日本語', de: 'Japanisch', fr: 'Japonaise'} },
+                { name: 'French', value: 'fr', name_localizations: {ja: 'フランス語', de: 'Französisch', fr: 'Français'} },
+                { name: 'German', value: 'de', name_localizations: {ja: 'ドイツ語', de: 'Deutsch', fr: 'Allemande'} },
+            ))
         .addBooleanOption(option => option.setName('fruity_guide').setRequired(false).setDescription('In this optional mode, only the Fruity Snacks video guide will be retrieved.'))
 
 ]

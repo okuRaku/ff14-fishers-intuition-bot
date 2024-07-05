@@ -2,6 +2,13 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const { EmbedBuilder } = require('discord.js');
 const DATA = require('./data.js')
 const wait = require('util').promisify(setTimeout);
+const i18n = require('i18n')
+
+i18n.configure({
+    locales: ['en', 'ja', 'fr', 'de'],
+    directory: __dirname + '/locales',
+    register: global
+});
 
 const timeConverter = (spawn, duration) => {
     const d1 = new Date(0, 0)
@@ -27,12 +34,12 @@ const buildWeatherString = (weathersFrom, weathers) => {
         `${weathersFromEmotified} → ${weathersEmotified}` : weathersEmotified
 }
 
-const buildIntuitionString = (predators, cachedTCItems) => {
-    return predators.map(p => `${p.amount}x ${cachedTCItems[p.id].en}`).join('\n')
+const buildIntuitionString = (predators, locale, cachedTCItems) => {
+    return predators.map(p => `${p.amount}x ${cachedTCItems[p.id][locale]}`).join('\n')
 }
 
-const buildSpotString = (spotId, cachedSpotData) => {
-    return `${cachedSpotData[spotId].en} (${cachedSpotData[spotId].x}, ${cachedSpotData[spotId].y})`
+const buildSpotString = (spotId, locale, cachedSpotData) => {
+    return `${cachedSpotData[spotId][locale]} (${cachedSpotData[spotId].x}, ${cachedSpotData[spotId].y})`
 }
 
 const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
@@ -51,7 +58,8 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
     ).then(response => response.json());
 
     if (allaganReports.allagan_reports.length > 0) {
-        const reports = allaganReports.allagan_reports
+        const reports = allaganReports.allagan_reports.filter(r => r.source == "FISHING")
+
         if (typeof reports[0].data === 'string') {
             reports.map(r => r.data = JSON.parse(r.data))
         }
@@ -100,12 +108,24 @@ const populateXivApiData = async () => {
         const allFishParameters = await fetch(`https://beta.xivapi.com/api/1/sheet/FishParameter?` + new URLSearchParams({
             fields: [
                 "Item.Name",
+                "Item.Name@ja",
+                "Item.Name@fr",
+                "Item.Name@de",
                 "Text",
+                "Text@ja",
+                "Text@fr",
+                "Text@de",
                 "Item.Icon",
                 "GatheringItemLevel.GatheringItemLevel",
                 "GatheringItemLevel.Stars",
                 "FishingRecordType.Addon.Text",
+                "FishingRecordType.Addon.Text@ja",
+                "FishingRecordType.Addon.Text@fr",
+                "FishingRecordType.Addon.Text@de",
                 "GatheringSubCategory.FolkloreBook",
+                "GatheringSubCategory.FolkloreBook@ja",
+                "GatheringSubCategory.FolkloreBook@fr",
+                "GatheringSubCategory.FolkloreBook@de",
                 "Item.IsCollectable"
             ].join(','),
             limit: 500,
@@ -118,16 +138,36 @@ const populateXivApiData = async () => {
 
         allFishParameters.rows.reduce((acc, fish) => {
             acc[fish.fields.Item.value] = {
-                name: fish.fields.Item.fields.Name,
+                name: {
+                    en: fish.fields.Item.fields.Name,
+                    ja: fish.fields.Item.fields?.['Name@ja'],
+                    fr: fish.fields.Item.fields?.['Name@fr'],
+                    de: fish.fields.Item.fields?.['Name@de']
+                },
                 level: fish.fields.GatheringItemLevel.fields.GatheringItemLevel,
                 ilevel: fish.fields.GatheringItemLevel.value,
                 stars: fish.fields.GatheringItemLevel.fields.Stars,
-                waters: fish.fields.FishingRecordType.fields.Addon.fields.Text,
+                waters: {
+                    en: fish.fields.FishingRecordType.fields.Addon.fields.Text,
+                    ja: fish.fields.FishingRecordType.fields.Addon.fields?.['Text@ja'],
+                    fr: fish.fields.FishingRecordType.fields.Addon.fields?.['Text@fr'],
+                    de: fish.fields.FishingRecordType.fields.Addon.fields?.['Text@de']
+                },
                 icon: fish.fields.Item.fields.Icon.path_hr1,
                 collectable: fish.fields.Item.fields.IsCollectable,
                 printIcon: (fish.fields.Item.fields.Icon.path.replace(/(\/\d)2(\d+\/\d)2(\d+)/, '$17$27$3')),
-                guide: fish.fields.Text == ''? 'TBD' : fish.fields.Text,
-                folklore: fish.fields.GatheringSubCategory.fields?.FolkloreBook,
+                guide: {
+                    en: fish.fields.Text == ''? 'TBD' : fish.fields.Text,
+                    ja: fish.fields.Text == ''? '不明' : fish.fields?.['Text@ja'],
+                    fr: fish.fields.Text == ''? 'TBD' : fish.fields?.['Text@fr'],
+                    de: fish.fields.Text == ''? 'TBD' : fish.fields?.['Text@de']
+                },
+                folklore: {
+                    en: fish.fields.GatheringSubCategory.fields?.FolkloreBook,
+                    ja: fish.fields.GatheringSubCategory.fields?.['FolkloreBook@ja'],
+                    fr: fish.fields.GatheringSubCategory.fields?.['FolkloreBook@fr'],
+                    de: fish.fields.GatheringSubCategory.fields?.['FolkloreBook@de']
+                }
             }
             return acc
         }, fishGuide)
@@ -142,58 +182,59 @@ const populateXivApiData = async () => {
 module.exports = {
     populateXivApiData: populateXivApiData,
     populateAllaganReportsData: populateAllaganReportsData,
-    buildEmbed: async (fishId, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData) => {
+    buildEmbed: async (fishId, locale, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData) => {
         const embed = new EmbedBuilder()
         try {
+            i18n.setLocale(locale)
             const fishGuide = cachedFishGuides[fishId]
-            const lodinns = cachedLodinnStats[cachedTCItems[fishId].en]
+            const lodinns = cachedLodinnStats[cachedTCItems[fishId][locale]]
             embed.setColor('#1fa1e0')
-                .setTitle(`${fishGuide.name}${fishGuide.collectable ? ' <:LogbookCollectableIcon:1254432749448593448>' : ''}`)
-                .setDescription(fishGuide.guide)
+                .setTitle(`${fishGuide.name[locale]}${fishGuide.collectable ? ' <:LogbookCollectableIcon:1254432749448593448>' : ''}`)
+                .setDescription(fishGuide.guide[locale])
                 .setURL(fishGuide.oceanFishingTime?'https://ffxiv.oceanfishing.boats/index.html':`https://ffxivteamcraft.com/db/en/item/${fishId}`)
                 .setThumbnail(`https://beta.xivapi.com/api/1/asset/${fishGuide.printIcon}?format=png`)
                 // .setThumbnail(`https://beta.xivapi.com/api/1/asset/${fishGuide.icon}?format=png`)
                 .setFooter({ text: 'Data from XIVAPI, Teamcraft\'s Allagan Reports, and Lodinn\'s stats.', iconURL: 'https://cdn.discordapp.com/emojis/851649094799982643.webp' })
             embed.setAuthor(
                 {
-                    name: `${fishGuide.level} (${fishGuide.ilevel}) ${'★'.repeat(fishGuide.stars)} ${fishGuide.waters}${fishGuide.folklore ? ' // ' + fishGuide.folklore : ''}`,
+                    name: `${fishGuide.level} (${fishGuide.ilevel}) ${'★'.repeat(fishGuide.stars)} ${fishGuide.waters[locale]}${fishGuide.folklore[locale] ? ' // ' + fishGuide.folklore[locale] : ''}`,
                     iconURL: `https://beta.xivapi.com/api/1/asset/${fishGuide.icon}?format=png`
                 })
 
-            embed.addFields({ name: 'Preferred Bait', value: `${(fishGuide.bait in cachedFishGuides) ? '<:Mooch:851647291122122772>' : '<:Bait:851646932442939394>'} ${cachedTCItems[fishGuide.bait].en}`, inline: true })
-            embed.addFields({ name: 'Tug & Hookset', value: `${fishGuide.tug} ${fishGuide.hookset}`, inline: true })
-            embed.addFields({ name: 'Prime Locations', value: `${fishGuide.spots.map(s => buildSpotString(s, cachedSpotData)).join('\n')}`, inline: true })
-            embed.addFields({ name: 'Weather', value: fishGuide.weathers?.length > 0? buildWeatherString(fishGuide.weathersFrom, fishGuide.weathers):'Any', inline: true })
+            embed.addFields({ name: i18n.__('Preferred Bait'), value: `${(fishGuide.bait in cachedFishGuides) ? '<:Mooch:851647291122122772>' : '<:Bait:851646932442939394>'} ${cachedTCItems[fishGuide.bait][locale]}`, inline: true })
+            embed.addFields({ name: i18n.__('Tug & Hookset'), value: `${fishGuide.tug} ${fishGuide.hookset}`, inline: true })
+            embed.addFields({ name: i18n.__('Prime Locations'), value: `${fishGuide.spots.map(s => buildSpotString(s, locale, cachedSpotData)).join('\n')}`, inline: true })
+            embed.addFields({ name: i18n.__('Weather'), value: fishGuide.weathers?.length > 0? buildWeatherString(fishGuide.weathersFrom, fishGuide.weathers):'N/A', inline: true })
             if (('spawn' in fishGuide && fishGuide.spawn != undefined) && ('duration' in fishGuide && fishGuide.duration != undefined) ) {
                 const times = timeConverter(fishGuide.spawn, fishGuide.duration)
-                embed.addFields({ name: 'Time', value: `${times.start}–${times.end}`, inline: true })
+                embed.addFields({ name: i18n.__('Time'), value: `${times.start}–${times.end}`, inline: true })
             } else if (fishGuide.oceanFishingTime) {
-                embed.addFields({ name: 'Time', value: DATA.OCEAN_TIME[fishGuide.oceanFishingTime], inline: true })
+                embed.addFields({ name: i18n.__('Time'), value: DATA.OCEAN_TIME[fishGuide.oceanFishingTime], inline: true })
             } else {
-                embed.addFields({ name: 'Time', value: `Always up`, inline: true })
+                embed.addFields({ name: i18n.__('Time'), value: i18n.__('Always Up'), inline: true })
             }
-            embed.addFields({ name: fishGuide.minGathering? 'Min Gathering':' ', value: fishGuide.minGathering?`${fishGuide.minGathering} [<:teamcraft:629747659917492224>](https://ffxivteamcraft.com/allagan-reports/${fishId})`: ' ', inline: true })
-            lodinns && embed.addFields({ name: 'Est. slip rate', value: `${(lodinns.slip_rate * 100).toFixed(1)}% [<:BigPixelFisher:1254442517248872528>](https://lodinn.github.io/stats?fish=${encodeURIComponent(fishGuide.name)})`, inline: true })
-            lodinns && embed.addFields({ name: 'Est. bite rate', value: `${(lodinns.bite_rate * 100).toFixed(1)}%`, inline: true })
-            lodinns && embed.addFields({ name: 'Bite times', value: `${lodinns.min_bitetime}–${lodinns.max_bitetime}s`, inline: true })
+            embed.addFields({ name: fishGuide.minGathering? i18n.__('Min Gathering'):' ', value: fishGuide.minGathering?`${fishGuide.minGathering} [<:teamcraft:629747659917492224>](https://ffxivteamcraft.com/allagan-reports/${fishId})`: ' ', inline: true })
+            lodinns && embed.addFields({ name: i18n.__('Est. slip rate'), value: `${(lodinns.slip_rate * 100).toFixed(1)}% [<:BigPixelFisher:1254442517248872528>](https://lodinn.github.io/stats?fish=${encodeURIComponent(fishGuide.name.en)})`, inline: true })
+            lodinns && embed.addFields({ name: i18n.__('Est. bite rate'), value: `${(lodinns.bite_rate * 100).toFixed(1)}%`, inline: true })
+            lodinns && embed.addFields({ name: i18n.__('Bite times'), value: `${lodinns.min_bitetime}–${lodinns.max_bitetime}s`, inline: true })
             
             if(fishGuide.predators?.length > 0) {
-                embed.addFields({ name: '<:FishersIntuition:851656821794013208> Intuition Requirements:', value: buildIntuitionString(fishGuide.predators, cachedTCItems), inline: false })
+                embed.addFields({ name: `<:FishersIntuition:851656821794013208> ${i18n.__('Intuition Requirements')}:`, value: buildIntuitionString(fishGuide.predators, locale, cachedTCItems), inline: false })
                 fishGuide.predators.forEach(predator => {
                     const predatorStrings = []
                     const predatorGuide = cachedFishGuides[predator.id]
-                    predatorGuide.weathers?.length > 0 && predatorStrings.push(`**Weather:** ${buildWeatherString(predatorGuide.weathersFrom, predatorGuide.weathers)}`)
+                    predatorGuide.weathers?.length > 0 && predatorStrings.push(`**${i18n.__('Weather')}:** ${buildWeatherString(predatorGuide.weathersFrom, predatorGuide.weathers)}`)
                     if (predatorGuide.spawn && predatorGuide.duration) {
                         const times = timeConverter(predatorGuide.spawn, predatorGuide.duration)
-                        predatorStrings.push(`**Time:** ${times.start}–${times.end}`)
+                        predatorStrings.push(`**${i18n.__('Time')}:** ${times.start}–${times.end}`)
                     } else if (predatorGuide.oceanFishingTime) {
-                        predatorStrings.push(`**Time:** ${DATA.OCEAN_TIME[fishGuide.oceanFishingTime]}`)
+                        predatorStrings.push(`**${i18n.__('Time')}:** ${DATA.OCEAN_TIME[fishGuide.oceanFishingTime]}`)
                     }
-                    predatorStrings.push(`**Bait:** ${predatorGuide.bait in cachedFishGuides? '<:Mooch:851647291122122772>':'<:Bait:851646932442939394>'} ${cachedTCItems[predatorGuide.bait].en}`)
-                    predatorStrings.push(`**Tug:** ${predatorGuide.tug}`)
-                    predatorStrings.push(`**Hookset:** ${predatorGuide.hookset}`)
+                    predatorStrings.push(`**${i18n.__('Bait')}:** ${predatorGuide.bait in cachedFishGuides? '<:Mooch:851647291122122772>':'<:Bait:851646932442939394>'} ${cachedTCItems[predatorGuide.bait][locale]}`)
+                    predatorStrings.push(`**${i18n.__('Tug')}:** ${predatorGuide.tug}`)
+                    predatorStrings.push(`**${i18n.__('Hookset')}:** ${predatorGuide.hookset}`)
 
-                    embed.addFields({ name: `<:FishersIntuition:851656821794013208> ${predatorGuide.name} (${predator.amount})`, value: predatorStrings.join('\n'), inline: true })
+                    embed.addFields({ name: `<:FishersIntuition:851656821794013208> ${predatorGuide.name[locale]} (${predator.amount})`, value: predatorStrings.join('\n'), inline: true })
                 })
             }
 
@@ -204,23 +245,23 @@ module.exports = {
                     moochSequence.unshift(bait)
                     bait = cachedFishGuides[bait].bait
                 }
-                embed.addFields({ name: '<:Mooch:851647291122122772> Mooch details: ', value: moochSequence.map(id => cachedTCItems[id].en).join(' → '), inline: false })
+                embed.addFields({ name: `<:Mooch:851647291122122772> ${i18n.__('Mooch Details')}: `, value: moochSequence.map(id => cachedTCItems[id][locale]).join(' → '), inline: false })
                 let mooch = 0;
                 while(mooch = moochSequence.shift()) {
                     const moochStrings = []
                     const moochGuide = cachedFishGuides[mooch]
-                    moochGuide.weathers?.length > 0 && moochStrings.push(`**Weather:** ${buildWeatherString(moochGuide.weathersFrom, moochGuide.weathers)}`)
+                    moochGuide.weathers?.length > 0 && moochStrings.push(`**${i18n.__('Weather')}:** ${buildWeatherString(moochGuide.weathersFrom, moochGuide.weathers)}`)
                     if (moochGuide.spawn && moochGuide.duration) {
                         const times = timeConverter(moochGuide.spawn, moochGuide.duration)
-                        moochStrings.push(`**Time:** ${times.start}–${times.end}`)
+                        moochStrings.push(`**${i18n.__('Time')}:** ${times.start}–${times.end}`)
                     } else if (moochGuide.oceanFishingTime) {
-                        moochStrings.push(`**Time:** ${DATA.OCEAN_TIME[moochGuide.oceanFishingTime]}`)
+                        moochStrings.push(`**${i18n.__('Time')}:** ${DATA.OCEAN_TIME[moochGuide.oceanFishingTime]}`)
                     }
-                    moochStrings.push(`**Bait:** ${cachedTCItems[moochGuide.bait].en}`)
-                    moochStrings.push(`**Tug:** ${moochGuide.tug}`)
-                    moochStrings.push(`**Hookset:** ${moochGuide.hookset}`)
+                    moochStrings.push(`**${i18n.__('Bait')}:** ${cachedTCItems[moochGuide.bait][locale]}`)
+                    moochStrings.push(`**${i18n.__('Tug')}:** ${moochGuide.tug}`)
+                    moochStrings.push(`**${i18n.__('Hookset')}:** ${moochGuide.hookset}`)
 
-                    embed.addFields({ name: `<:Mooch:851647291122122772> ${moochGuide.name}`, value: moochStrings.join('\n'), inline: true })
+                    embed.addFields({ name: `<:Mooch:851647291122122772> ${moochGuide.name[locale]}`, value: moochStrings.join('\n'), inline: true })
                 }
             }
             
@@ -229,10 +270,10 @@ module.exports = {
         } catch (e) {
             console.log(e)
             embed.setColor('#1fa1e0')
-                .setTitle('Incomplete data for: ' + cachedFishGuides[fishId].name)
+                .setTitle(i18n.__('Incomplete data for') + cachedFishGuides[fishId].name[locale])
                 .setThumbnail('https://xivapi.com/i/001000/001135.png')
-                .setFooter({ text: 'If you believe this may be in error, please @mention okuRaku#1417' })
-                .setURL('https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(cachedFishGuides[fishId].name))
+                .setFooter({ text: i18n.__('ErrorMentionText') })
+                .setURL('https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(cachedFishGuides[fishId].name[locale]))
         }
         return embed
     }
