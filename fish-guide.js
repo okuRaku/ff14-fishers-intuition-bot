@@ -58,7 +58,7 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
     ).then(response => response.json());
 
     if (allaganReports.allagan_reports.length > 0) {
-        const reports = allaganReports.allagan_reports.filter(r => r.source == "FISHING")
+        const reports = allaganReports.allagan_reports.filter(r => (r.source == "FISHING" || r.source == "SPEARFISHING"))
 
         if (typeof reports[0].data === 'string') {
             reports.map(r => r.data = JSON.parse(r.data))
@@ -270,7 +270,7 @@ module.exports = {
         } catch (e) {
             console.log(e)
             embed.setColor('#1fa1e0')
-                .setTitle(i18n.__('Incomplete data for') + cachedFishGuides[fishId].name[locale])
+                .setTitle(i18n.__('Incomplete data for') + ': ' + cachedFishGuides[fishId].name[locale])
                 .setThumbnail('https://xivapi.com/i/001000/001135.png')
                 .setFooter({ text: i18n.__('ErrorMentionText') })
                 .setURL('https://ffxivteamcraft.com/search?type=Item&query=' + encodeURIComponent(cachedFishGuides[fishId].name[locale]))
