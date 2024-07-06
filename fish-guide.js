@@ -54,11 +54,26 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
     }
 
     const allaganReports = await fetch(
-        `https://gubal.ffxivteamcraft.com/api/rest/allagan_reports/${fishId}`
+        `https://gubal.ffxivteamcraft.com/graphql`,
+        {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                operationName: 'FishersIntuitionFishDetails',
+                query: `query FishersIntuitionFishDetails($itemId: Int!) {
+                            allagan_reports(where:{itemId: {_eq: $itemId}}){
+                                data, source
+                            }
+                        }`,
+                variables: { itemId: fishId }
+            })
+        }
     ).then(response => response.json());
 
-    if (allaganReports.allagan_reports.length > 0) {
-        const reports = allaganReports.allagan_reports.filter(r => (r.source == "FISHING" || r.source == "SPEARFISHING"))
+    if (allaganReports.data.allagan_reports.length > 0) {
+        const reports = allaganReports.data.allagan_reports.filter(r => (r.source == "FISHING" || r.source == "SPEARFISHING"))
 
         if (typeof reports[0].data === 'string') {
             reports.map(r => r.data = JSON.parse(r.data))
