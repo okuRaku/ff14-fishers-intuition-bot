@@ -64,7 +64,7 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
                 operationName: 'FishersIntuitionFishDetails',
                 query: `query FishersIntuitionFishDetails($itemId: Int!) {
                             allagan_reports(where:{itemId: {_eq: $itemId}}){
-                                data,
+                                data, source
                             }
                         }`,
                 variables: { itemId: fishId }
@@ -72,8 +72,8 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
         }
     ).then(response => response.json());
 
-    if (allaganReports.allagan_reports.length > 0) {
-        const reports = allaganReports.allagan_reports.filter(r => (r.source == "FISHING" || r.source == "SPEARFISHING"))
+    if (allaganReports.data.allagan_reports.length > 0) {
+        const reports = allaganReports.data.allagan_reports.filter(r => (r.source == "FISHING" || r.source == "SPEARFISHING"))
 
         if (typeof reports[0].data === 'string') {
             reports.map(r => r.data = JSON.parse(r.data))
