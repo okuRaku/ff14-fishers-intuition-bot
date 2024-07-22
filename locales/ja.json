@@ -7,6 +7,17 @@
     "Mooch Details": "泳がせ釣り順番",
     "Bait":"餌",
     "Tug":"食いつき",
+    "Speed":"速度",
+    "Very Slow":"遅い",
+    "Slow":"やや遅い",
+    "Average":"普通",
+    "Fast":"やや速い",
+    "Faster":"速い",
+    "Very Fast":"非常に速い",
+    "ShadowSize":"シルエット",
+    "Small":"小型",
+    "Medium":"中型",
+    "Large":"大型",
     "Hookset":"引っ掛け",
     "Weather":"天候",
     "Time":"時間",
@@ -15,5 +26,7 @@
     "Est. bite rate":"食いつき確率推測",
     "Bite times":"食いつき時刻",
     "Incomplete data for": "データが現在不足",
-    "ErrorMentionText": "誤りがあればどうぞ @mention okuRaku#1417をお願いします"
+    "ErrorMentionText": "誤りがあればどうぞ @mention okuRaku#1417をお願いします",
+    "Scrip":"スクリップ",
+    "Reduction":"精選"
 }

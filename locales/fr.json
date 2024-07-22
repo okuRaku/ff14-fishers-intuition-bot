@@ -7,6 +7,17 @@
     "Mooch Details": "Détails pour la pêche au vif",
     "Bait": "Appât",
     "Tug": "Taille",
+    "Speed":"Vitesse",
+    "Very Slow":"Très lent",
+    "Slow":"Lent",
+    "Average":"Moyen",
+    "Fast":"Rapide",
+    "Faster":"Plus rapide",
+    "Very Fast":"Très rapide",
+    "ShadowSize":"Ombre",
+    "Small":"Petit",
+    "Medium":"Normal",
+    "Large":"Grande",
     "Hookset": "Ferrage",
     "Weather": "Météo",
     "Time": "Temps",
@@ -15,5 +26,7 @@
     "Est. bite rate": "Taux estimé de prise réussie",
     "Bite times": "Temps pour une touche",
     "Incomplete data for": "Données incomplètes pour",
-    "ErrorMentionText": "Si vous pensez qu'il s'agit d'une erreur, veuillez mentionner @mention okuRaku#1417"
+    "ErrorMentionText": "Si vous pensez qu'il s'agit d'une erreur, veuillez mentionner @mention okuRaku#1417",
+    "Scrip":"Assignat",
+    "Reduction": "Éthérolyse"
 }
