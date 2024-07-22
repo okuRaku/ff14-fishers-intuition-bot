@@ -43,7 +43,7 @@ const getFishId = (fishString, guide) => {
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.once(Events.ClientReady, c => {
     console.log('Ready!');
-});
+    });
 
 // Following is a background process, designed to check periodically whether a small set of the rarest fish are coming up soon, and message a configured channel if so
 // start processes for these three rarest fish for now
@@ -56,6 +56,9 @@ channelIds.forEach(chan => {
 // Also at startup populate the fish guide data, TC item names, Lodinn stats
 let cachedFishGuides = {}
 let cachedTCItems = {}
+let cachedTCSpearfishingData = {}
+let cachedTCCollectibleRewards = {}
+let cachedTCReverseReduction = {}
 let cachedLodinnStats = {}
 let cachedSpotData = {}
 fishGuide.populateXivApiData().then(populated => cachedFishGuides = populated)
@@ -64,6 +67,40 @@ fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging
         cachedTCItems = json
         console.log(`Cached ${Object.keys(json).length} items from Teamcraft`)
     }))
+
+fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/spear-fishing-log.json')
+    .then(response => response.json().then(logJson => {
+        fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/places.json')
+            .then(response => response.json().then(placesJson => {
+                logJson.map(spearfish => {
+                    const f = {
+                        x: spearfish.coords.x,
+                        y: spearfish.coords.y,
+                        en: placesJson[spearfish.zoneId].en,
+                        ja: placesJson[spearfish.zoneId].ja,
+                        fr: placesJson[spearfish.zoneId].fr,
+                        de: placesJson[spearfish.zoneId].de,
+                    }
+                    if(spearfish.itemId in cachedTCSpearfishingData) {
+                        cachedTCSpearfishingData[spearfish.itemId].push(f)
+                    } else {
+                        cachedTCSpearfishingData[spearfish.itemId] = [f]
+                    }
+                })
+                console.log(`Cached ${Object.keys(cachedTCSpearfishingData).length} spearfish from Teamcraft`)
+            }))
+    }))
+fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/collectables.json')
+    .then(response => response.json().then(json => {
+        cachedTCCollectibleRewards = json
+        console.log(`Cached ${Object.keys(cachedTCCollectibleRewards).length} collectible rewards`)
+    }))
+fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/reverse-reduction.json')
+    .then(response => response.json().then(json => {
+        cachedTCReverseReduction = json
+        console.log(`Cached ${Object.keys(cachedTCReverseReduction).length} reverse reduction data`)
+    }))
+    
 fetch('https://lodinn.github.io/assets/big_fish_stats_v5.json')
     .then(response => response.json().then(json => {
         cachedLodinnStats = json
@@ -72,7 +109,6 @@ fetch('https://lodinn.github.io/assets/big_fish_stats_v5.json')
 
 fetch('https://beta.xivapi.com/api/1/sheet/FishingSpot?limit=500&schema=exdschema@7.0&fields=PlaceName.Name@ja,PlaceName.Name@en,PlaceName.Name@fr,PlaceName.Name@de')
     .then(response => response.json().then(xivSpotJson => {
-        // console.log(xivSpotJson)
         fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/fishing-spots.json')
             .then(response => response.json().then(json => {
                 json.map(spot => {
@@ -360,12 +396,30 @@ client.on('interactionCreate', async interaction => {
             await fishGuide.populateAllaganReportsData(fishId, cachedFishGuides)
 
             if(interaction.options.getBoolean('fruity_guide')) {
-                interaction.editReply({
+                await interaction.editReply({
                     content: cachedFishGuides[fishId].fruityVideo,
                 });
             } else {
-                const embed = await fishGuide.buildEmbed(fishId, locale, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData)
-                interaction.editReply({
+                const embed = await fishGuide.buildEmbed(
+                    fishId, locale, 
+                    cachedFishGuides, cachedTCItems, cachedLodinnStats, 
+                    cachedSpotData, cachedTCSpearfishingData, 
+                    cachedTCCollectibleRewards, cachedTCReverseReduction)
+                if(interaction.options.getBoolean('spoiler')) {
+                    embed.setAuthor({
+                        name:`${embed.data.author.name}`.replace(/\).*/,')'),
+                        iconURL:embed.data.author.icon_url
+                    })
+                    embed.setDescription(`||${embed.data.description}||`)
+                    embed.setFields(embed.data.fields.map(f => {
+                        return {
+                            name: f.name,
+                            value: `||${f.value}||`,
+                            inline: f.inline
+                        }
+                    }))
+                }
+                await interaction.editReply({
                     embeds: [embed]
                 });
             }

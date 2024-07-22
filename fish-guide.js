@@ -53,6 +53,21 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
         2: "<:weak_bite:1079108260738633798>"
     }
 
+    const shadowSizes = {
+        0: 'Small',
+        1: 'Medium',
+        2: 'Large'
+    }
+
+    const speeds = {
+        0: 'Very Slow',
+        1: 'Slow',
+        2: 'Average',
+        3: 'Fast',
+        4: 'Faster',
+        5: 'Very Fast',
+    }
+
     const allaganReports = await fetch(
         `https://gubal.ffxivteamcraft.com/graphql`,
         {
@@ -81,28 +96,45 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
         if(!targetSpot) targetSpot = reports[0].data.spot
         const targetReport = reports.find(r => targetSpot == r.data.spot)
 
-        const spots = reports.map(r => {
-            if (r.itemId == targetReport.itemId) return r.data.spot
-        })
-        fishGuide[fishId] = {
-            tug: tugEmotes[targetReport.data.tug],
-            hookset: hooksetEmotes[targetReport.data.hookset],
-            bait: targetReport.data.bait,
-            spots: spots,
-            spawn: targetReport.data.spawn,
-            duration: targetReport.data.duration,
-            weathersFrom: targetReport.data.weathersFrom,
-            weathers: targetReport.data.weathers,
-            predators: targetReport.data.predators,
-            fruityVideo: targetReport.data.fruityVideo,
-            minGathering: targetReport.data.minGathering,
-            oceanFishingTime: targetReport.data.oceanFishingTime,
-            ...fishGuide[fishId]
+        if(fishGuide[fishId].isSpearfishing) {
+
+            fishGuide[fishId] = {
+                spawn: targetReport.data.spawn,
+                duration: targetReport.data.duration,
+                weathersFrom: targetReport.data.weathersFrom,
+                weathers: targetReport.data.weathers,
+                predators: targetReport.data.predators,
+                fruityVideo: targetReport.data.fruityVideo,
+                minGathering: targetReport.data.minGathering,
+                speed: ('speed' in targetReport.data) ? speeds[targetReport.data.speed] : undefined,
+                shadowSize: ('shadowSize' in targetReport.data)? shadowSizes[targetReport.data.shadowSize] : undefined,
+                ...fishGuide[fishId]
+            }
+        } else {
+            const spots = reports.map(r => {
+                if (r.itemId == targetReport.itemId) return r.data.spot
+            })
+            fishGuide[fishId] = {
+                tug: tugEmotes[targetReport.data.tug],
+                hookset: hooksetEmotes[targetReport.data.hookset],
+                bait: targetReport.data.bait,
+                spots: spots,
+                spawn: targetReport.data.spawn,
+                duration: targetReport.data.duration,
+                weathersFrom: targetReport.data.weathersFrom,
+                weathers: targetReport.data.weathers,
+                predators: targetReport.data.predators,
+                fruityVideo: targetReport.data.fruityVideo,
+                minGathering: targetReport.data.minGathering,
+                oceanFishingTime: targetReport.data.oceanFishingTime,
+                ...fishGuide[fishId]
+            }
         }
+        
 
         if(targetReport.data.predators?.length > 0) {
             for (const predator of targetReport.data.predators) {
-                await populateAllaganReportsData(predator.id, fishGuide, targetSpot)
+                await populateAllaganReportsData(predator.id, fishGuide, fishGuide[fishId].isSpearfishing? undefined : targetSpot)
             }
         }
 
@@ -115,13 +147,14 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
 
 }
 
-const populateXivApiData = async () => {
-    console.log(`Starting Fish Guide population...`)
+const queryXivApi = async (sheetName, after, fishGuide) => {
     let morePages = true
-    const fishGuide = {}
-    for (let i = 0; (i < 4 && morePages); i++) {
-        const allFishParameters = await fetch(`https://beta.xivapi.com/api/1/sheet/FishParameter?` + new URLSearchParams({
+    const allFishParameters = await fetch(`https://beta.xivapi.com/api/1/sheet/${sheetName}?` + new URLSearchParams({
             fields: [
+                "Description",
+                "Description@ja",
+                "Description@fr",
+                "Description@de",
                 "Item.Name",
                 "Item.Name@ja",
                 "Item.Name@fr",
@@ -141,16 +174,19 @@ const populateXivApiData = async () => {
                 "GatheringSubCategory.FolkloreBook@ja",
                 "GatheringSubCategory.FolkloreBook@fr",
                 "GatheringSubCategory.FolkloreBook@de",
-                "Item.IsCollectable"
+                "Item.IsCollectable",
+                "FishingRecordType.IsSpearfishing"
             ].join(','),
             limit: 500,
-            after: Math.max(0, (i * 500) - 1),
+            after: after,
             schema: "exdschema@7.0"
 
         })).then(response => response.json());
-        if (allFishParameters.code === 404) break;
+        if (allFishParameters.code === 404) {
+            morePages = false;
+            return
+        };
         if (allFishParameters.rows.length < 500) morePages = false;
-
         allFishParameters.rows.reduce((acc, fish) => {
             acc[fish.fields.Item.value] = {
                 name: {
@@ -162,7 +198,7 @@ const populateXivApiData = async () => {
                 level: fish.fields.GatheringItemLevel.fields.GatheringItemLevel,
                 ilevel: fish.fields.GatheringItemLevel.value,
                 stars: fish.fields.GatheringItemLevel.fields.Stars,
-                waters: {
+                waters: (sheetName == 'SpearfishingItem') ? undefined : {
                     en: fish.fields.FishingRecordType.fields.Addon.fields.Text,
                     ja: fish.fields.FishingRecordType.fields.Addon.fields?.['Text@ja'],
                     fr: fish.fields.FishingRecordType.fields.Addon.fields?.['Text@fr'],
@@ -172,24 +208,40 @@ const populateXivApiData = async () => {
                 collectable: fish.fields.Item.fields.IsCollectable,
                 printIcon: (fish.fields.Item.fields.Icon.path.replace(/(\/\d)2(\d+\/\d)2(\d+)/, '$17$27$3')),
                 guide: {
-                    en: fish.fields.Text == ''? 'TBD' : fish.fields.Text,
-                    ja: fish.fields.Text == ''? '不明' : fish.fields?.['Text@ja'],
-                    fr: fish.fields.Text == ''? 'TBD' : fish.fields?.['Text@fr'],
-                    de: fish.fields.Text == ''? 'TBD' : fish.fields?.['Text@de']
+                    en: fish.fields.Text == ''? 'TBD' : (sheetName == 'SpearfishingItem') ? fish.fields.Description : fish.fields.Text,
+                    ja: fish.fields.Text == ''? '不明' : (sheetName == 'SpearfishingItem') ? fish.fields?.['Description@ja'] : fish.fields?.['Text@ja'],
+                    fr: fish.fields.Text == ''? 'TBD' : (sheetName == 'SpearfishingItem') ? fish.fields?.['Description@fr'] :fish.fields?.['Text@fr'],
+                    de: fish.fields.Text == ''? 'TBD' : (sheetName == 'SpearfishingItem') ? fish.fields?.['Description@de'] :fish.fields?.['Text@de']
                 },
-                folklore: {
+                folklore: (sheetName == 'SpearfishingItem') ? undefined :{
                     en: fish.fields.GatheringSubCategory.fields?.FolkloreBook,
                     ja: fish.fields.GatheringSubCategory.fields?.['FolkloreBook@ja'],
                     fr: fish.fields.GatheringSubCategory.fields?.['FolkloreBook@fr'],
                     de: fish.fields.GatheringSubCategory.fields?.['FolkloreBook@de']
-                }
+                },
+                isSpearfishing: fish.fields.FishingRecordType.fields.IsSpearfishing == 1? true : false
             }
             return acc
         }, fishGuide)
 
+        return morePages
+}
+
+const populateXivApiData = async () => {
+    console.log(`Starting Fish Guide population...`)
+    let morePages = true
+    const fishGuide = {}
+    for (let i = 0; (i < 4 && morePages); i++) {
+        morePages = await queryXivApi('FishParameter', Math.max(0, (i * 500) - 1), fishGuide)
         wait(1000)
     }
-    console.log(`Populated Fish Guide with ${Object.keys(fishGuide).length} entries.`)
+    morePages = true;
+    console.log(`Populated Fish Guide with ${Object.keys(fishGuide).length} entries (just FishParameter).`)
+    for (let i = 0; (i < 4 && morePages); i++) {
+        morePages = await queryXivApi('SpearfishingItem', Math.max(0, (i * 500) - 1), fishGuide)
+        wait(1000)
+    }
+    console.log(`Populated Fish Guide with ${Object.keys(fishGuide).length} entries (including SpearfishingItem).`)
     return fishGuide
 }
 
@@ -197,7 +249,7 @@ const populateXivApiData = async () => {
 module.exports = {
     populateXivApiData: populateXivApiData,
     populateAllaganReportsData: populateAllaganReportsData,
-    buildEmbed: async (fishId, locale, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData) => {
+    buildEmbed: async (fishId, locale, cachedFishGuides, cachedTCItems, cachedLodinnStats, cachedSpotData, cachedTCSpearfishingData, cachedTCCollectibleRewards, cachedTCReverseReduction) => {
         const embed = new EmbedBuilder()
         try {
             i18n.setLocale(locale)
@@ -212,13 +264,19 @@ module.exports = {
                 .setFooter({ text: 'Data from XIVAPI, Teamcraft\'s Allagan Reports, and Lodinn\'s stats.', iconURL: 'https://cdn.discordapp.com/emojis/851649094799982643.webp' })
             embed.setAuthor(
                 {
-                    name: `${fishGuide.level} (${fishGuide.ilevel}) ${'★'.repeat(fishGuide.stars)} ${fishGuide.waters[locale]}${fishGuide.folklore[locale] ? ' // ' + fishGuide.folklore[locale] : ''}`,
+                    name: `${fishGuide.level} (${fishGuide.ilevel}) ${'★'.repeat(fishGuide.stars)} ${fishGuide.waters?.[locale]? fishGuide.waters?.[locale] : ''}${fishGuide.folklore?.[locale] ? ' // ' + fishGuide.folklore[locale] : ''}`,
                     iconURL: `https://beta.xivapi.com/api/1/asset/${fishGuide.icon}?format=png`
                 })
 
-            embed.addFields({ name: i18n.__('Preferred Bait'), value: `${(fishGuide.bait in cachedFishGuides) ? '<:Mooch:851647291122122772>' : '<:Bait:851646932442939394>'} ${cachedTCItems[fishGuide.bait][locale]}`, inline: true })
-            embed.addFields({ name: i18n.__('Tug & Hookset'), value: `${fishGuide.tug} ${fishGuide.hookset}`, inline: true })
-            embed.addFields({ name: i18n.__('Prime Locations'), value: `${fishGuide.spots.map(s => buildSpotString(s, locale, cachedSpotData)).join('\n')}`, inline: true })
+            if(fishGuide.isSpearfishing) {
+                embed.addFields({ name: i18n.__('Speed'), value: i18n.__(fishGuide.speed), inline: true })
+                embed.addFields({ name: i18n.__('ShadowSize'), value: i18n.__(fishGuide.shadowSize), inline: true })
+                embed.addFields({ name: i18n.__('Prime Locations'), value: cachedTCSpearfishingData[fishId].map(s => `${s[locale]} (${s.x}, ${s.y})`).join('\n'), inline: true })
+            } else {
+                embed.addFields({ name: i18n.__('Preferred Bait'), value: `${(fishGuide.bait in cachedFishGuides) ? '<:Mooch:851647291122122772>' : '<:Bait:851646932442939394>'} ${cachedTCItems[fishGuide.bait][locale]}`, inline: true })
+                embed.addFields({ name: i18n.__('Tug & Hookset'), value: `${fishGuide.tug} ${fishGuide.hookset}`, inline: true })
+                embed.addFields({ name: i18n.__('Prime Locations'), value: `${fishGuide.spots.map(s => buildSpotString(s, locale, cachedSpotData)).join('\n')}`, inline: true })
+            }
             embed.addFields({ name: i18n.__('Weather'), value: fishGuide.weathers?.length > 0? buildWeatherString(fishGuide.weathersFrom, fishGuide.weathers):'N/A', inline: true })
             if (('spawn' in fishGuide && fishGuide.spawn != undefined) && ('duration' in fishGuide && fishGuide.duration != undefined) ) {
                 const times = timeConverter(fishGuide.spawn, fishGuide.duration)
@@ -229,12 +287,24 @@ module.exports = {
                 embed.addFields({ name: i18n.__('Time'), value: i18n.__('Always Up'), inline: true })
             }
             embed.addFields({ name: fishGuide.minGathering? i18n.__('Min Gathering'):' ', value: fishGuide.minGathering?`${fishGuide.minGathering} [<:teamcraft:629747659917492224>](https://ffxivteamcraft.com/allagan-reports/${fishId})`: ' ', inline: true })
+            if(fishGuide.collectable && fishId in cachedTCCollectibleRewards) {
+                const reward = cachedTCCollectibleRewards[fishId]
+                const scripString = [
+                    `${reward.reward == 41785? '<:orangescrip:1256167653731598347>' : '<:purplescrip:1255748765969682515>'} x${reward.base.scrip} <:LogbookCollectableIcon:1254432749448593448>${reward.base.rating} - ${reward.mid.rating - 1}`,
+                    `${reward.reward == 41785? '<:orangescrip:1256167653731598347>' : '<:purplescrip:1255748765969682515>'} x${reward.mid.scrip} <:LogbookCollectableIcon:1254432749448593448>${reward.mid.rating} - ${reward.high.rating - 1}`,
+                    `${reward.reward == 41785? '<:orangescrip:1256167653731598347>' : '<:purplescrip:1255748765969682515>'} x${reward.high.scrip} <:LogbookCollectableIcon:1254432749448593448>${reward.high.rating} +`
+                ]
+                embed.addFields({ name: i18n.__('Scrip'), value: scripString.join('\n'), inline:true})
+            }
+            if(fishGuide.collectable && fishId in cachedTCReverseReduction) {
+                embed.addFields({ name: i18n.__('Reduction'), value: `<:Reduce:1260247115762897038> ${cachedTCItems[cachedTCReverseReduction[fishId][0]][locale]}`, inline:true})
+            }
             lodinns && embed.addFields({ name: i18n.__('Est. slip rate'), value: `${(lodinns.slip_rate * 100).toFixed(1)}% [<:BigPixelFisher:1254442517248872528>](https://lodinn.github.io/stats?fish=${encodeURIComponent(fishGuide.name.en)})`, inline: true })
             lodinns && embed.addFields({ name: i18n.__('Est. bite rate'), value: `${(lodinns.bite_rate * 100).toFixed(1)}%`, inline: true })
             lodinns && embed.addFields({ name: i18n.__('Bite times'), value: `${lodinns.min_bitetime}–${lodinns.max_bitetime}s`, inline: true })
             
             if(fishGuide.predators?.length > 0) {
-                embed.addFields({ name: `<:FishersIntuition:851656821794013208> ${i18n.__('Intuition Requirements')}:`, value: buildIntuitionString(fishGuide.predators, locale, cachedTCItems), inline: false })
+                embed.addFields({ name:j `<:FishersIntuition:851656821794013208> ${i18n.__('Intuition Requirements')}:`, value: buildIntuitionString(fishGuide.predators, locale, cachedTCItems), inline: false })
                 fishGuide.predators.forEach(predator => {
                     const predatorStrings = []
                     const predatorGuide = cachedFishGuides[predator.id]
@@ -245,9 +315,15 @@ module.exports = {
                     } else if (predatorGuide.oceanFishingTime) {
                         predatorStrings.push(`**${i18n.__('Time')}:** ${DATA.OCEAN_TIME[fishGuide.oceanFishingTime]}`)
                     }
-                    predatorStrings.push(`**${i18n.__('Bait')}:** ${predatorGuide.bait in cachedFishGuides? '<:Mooch:851647291122122772>':'<:Bait:851646932442939394>'} ${cachedTCItems[predatorGuide.bait][locale]}`)
-                    predatorStrings.push(`**${i18n.__('Tug')}:** ${predatorGuide.tug}`)
-                    predatorStrings.push(`**${i18n.__('Hookset')}:** ${predatorGuide.hookset}`)
+                    if(fishGuide.isSpearfishing) {
+                        predatorStrings.push(`**${i18n.__('Speed')}** ${i18n.__(predatorGuide.speed)}`)
+                        predatorStrings.push(`**${i18n.__('ShadowSize')}** ${i18n.__(predatorGuide.shadowSize)}`)
+                    } else {
+                        predatorStrings.push(`**${i18n.__('Bait')}:** ${predatorGuide.bait in cachedFishGuides? '<:Mooch:851647291122122772>':'<:Bait:851646932442939394>'} ${cachedTCItems[predatorGuide.bait][locale]}`)
+                        predatorStrings.push(`**${i18n.__('Tug')}:** ${predatorGuide.tug}`)
+                        predatorStrings.push(`**${i18n.__('Hookset')}:** ${predatorGuide.hookset}`)
+                    }
+                    
 
                     embed.addFields({ name: `<:FishersIntuition:851656821794013208> ${predatorGuide.name[locale]} (${predator.amount})`, value: predatorStrings.join('\n'), inline: true })
                 })

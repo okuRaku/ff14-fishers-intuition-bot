@@ -7,6 +7,17 @@
     "Mooch Details": "Mooch Details",
     "Bait":"Bait",
     "Tug":"Tug",
+    "Speed":"Speed",
+    "Very Slow":"Very Slow",
+    "Slow":"Slow",
+    "Average":"Average",
+    "Fast":"Fast",
+    "Faster":"Faster",
+    "Very Fast":"Very Fast",
+    "ShadowSize":"Shadow",
+    "Small":"Small",
+    "Medium":"Medium",
+    "Large":"Large",
     "Hookset":"Hookset",
     "Weather":"Weather",
     "Time":"Time",
@@ -15,5 +26,7 @@
     "Est. bite rate":"Est. bite rate",
     "Bite times":"Bite times",
     "Incomplete data for": "Incomplete data for",
-    "ErrorMentionText": "If you believe this may be in error, please @mention okuRaku#1417"
+    "ErrorMentionText": "If you believe this may be in error, please @mention okuRaku#1417",
+    "Scrip":"Scrip",
+    "Reduction":"Reduction"
 }

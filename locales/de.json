@@ -7,6 +7,17 @@
     "Mooch Details": "Köderfisch Einzelheiten",
     "Bait": "Köder",
     "Tug": "Biß",
+    "Speed":"Geschwindigkeit",
+    "Very Slow":"Sehr langsam",
+    "Slow":"Langsam",
+    "Average":"Durchschnittlich",
+    "Fast":"Schnell",
+    "Faster":"Schneller",
+    "Very Fast":"Sehr schnell",
+    "ShadowSize":"Schatten",
+    "Small":"Klein",
+    "Medium":"Normal",
+    "Large":"Groß",
     "Hookset": "Anschlag",
     "Weather": "Wetter",
     "Time": "Zeit",
@@ -15,5 +26,7 @@
     "Est. bite rate": "Geschätzte Bißrate",
     "Bite times": "Bißzeit",
     "Incomplete data for": "Unvollständige Daten für",
-    "ErrorMentionText": "Wenn Sie glauben, dass dies ein Fehler sein könnte, erwähnen Sie bitte @mention okuRaku#1417"
+    "ErrorMentionText": "Wenn Sie glauben, dass dies ein Fehler sein könnte, erwähnen Sie bitte @mention okuRaku#1417",
+    "Scrip":"Schein",
+    "Reduction":"Raffinieren"
 }
