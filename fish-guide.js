@@ -304,7 +304,7 @@ module.exports = {
             lodinns && embed.addFields({ name: i18n.__('Bite times'), value: `${lodinns.min_bitetime}–${lodinns.max_bitetime}s`, inline: true })
             
             if(fishGuide.predators?.length > 0) {
-                embed.addFields({ name:j `<:FishersIntuition:851656821794013208> ${i18n.__('Intuition Requirements')}:`, value: buildIntuitionString(fishGuide.predators, locale, cachedTCItems), inline: false })
+                embed.addFields({ name: `<:FishersIntuition:851656821794013208> ${i18n.__('Intuition Requirements')}:`, value: buildIntuitionString(fishGuide.predators, locale, cachedTCItems), inline: false })
                 fishGuide.predators.forEach(predator => {
                     const predatorStrings = []
                     const predatorGuide = cachedFishGuides[predator.id]
