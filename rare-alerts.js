@@ -107,7 +107,7 @@ const rareFishBackgroundChecker = (fish, channelId, alertRole, client) => {
                                 && JSON.stringify(message.embeds[0].author.name) == JSON.stringify(alertMessage.embeds[0].data.author.name))
                         })) {
                             channel.send(alertMessage).then((sent_alert) => {
-                                if (channel.type === ChannelType.GuildAnnouncement) {
+                                if (channel.type === ChannelType.GuildAnnouncement && (diffMillis > intervalImminent)) {
                                     sent_alert.crosspost()
                                         .then(() => console.log('Crossposted message'))
                                         .catch(console.error);
