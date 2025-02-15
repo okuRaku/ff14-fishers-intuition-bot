@@ -254,7 +254,7 @@ module.exports = {
         try {
             i18n.setLocale(locale)
             const fishGuide = cachedFishGuides[fishId]
-            const lodinns = cachedLodinnStats[cachedTCItems[fishId][locale]]
+            const lodinns = cachedLodinnStats[cachedTCItems[fishId]['en']]
             embed.setColor('#1fa1e0')
                 .setTitle(`${fishGuide.name[locale]}${fishGuide.collectable ? ' <:LogbookCollectableIcon:1254432749448593448>' : ''}`)
                 .setDescription(fishGuide.guide[locale])

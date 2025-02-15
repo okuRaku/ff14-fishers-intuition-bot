@@ -101,7 +101,7 @@ fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging
         console.log(`Cached ${Object.keys(cachedTCReverseReduction).length} reverse reduction data`)
     }))
     
-fetch('https://lodinn.github.io/assets/big_fish_stats_v5.json')
+fetch('https://lodinn.github.io/assets/big_fish_stats_latest.json')
     .then(response => response.json().then(json => {
         cachedLodinnStats = json
         console.log(`Cached ${Object.keys(json).length} items from Lodinn's stats`)
