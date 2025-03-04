@@ -124,7 +124,7 @@ fetch('https://beta.xivapi.com/api/1/sheet/FishingSpot?limit=500&schema=exdschem
                     cachedSpotData[spot.id] = {
                         x: x,
                         y: y,
-                        en: xivSpot.fields.PlaceName.fields["Name"],
+                        en: xivSpot.fields.PlaceName.fields["Name@en"],
                         ja: xivSpot.fields.PlaceName.fields["Name@ja"],
                         fr: xivSpot.fields.PlaceName.fields["Name@fr"],
                         de: xivSpot.fields.PlaceName.fields["Name@de"]
