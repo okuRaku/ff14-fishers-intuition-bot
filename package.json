@@ -3,20 +3,24 @@
   "version": "1.0.0",
   "author": "Jesse <okur4ku@gmail.com>",
   "dependencies": {
-    "@discordjs/builders": "^1.4.0",
-    "@discordjs/rest": "^1.5.0",
-    "canvas": "^2.8.0",
-    "discord-api-types": "^0.37.33",
-    "discord.js": "^14.9.0",
+    "@discordjs/builders": "^1.11.3",
+    "@discordjs/rest": "^1.7.1",
+    "@sapphire/shapeshift": "^4.0.0",
+    "canvas": "^3.1.2",
+    "discord-api-types": "^0.37.120",
+    "discord.js": "^14.21.0",
     "fuse.js": "^7.0.0",
     "i18n": "^0.15.1",
     "node-cron": "^3.0.0",
     "node-fetch": "^3.0.0"
   },
+  "resolutions": {
+    "@sapphire/shapeshift": "^4.0.0"
+  },
   "scripts": {
     "start": "node app.js"
   },
   "engines": {
-    "node": "16.x"
+    "node": "22.x"
   }
 }

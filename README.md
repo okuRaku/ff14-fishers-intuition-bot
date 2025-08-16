@@ -69,6 +69,14 @@ Fish Guide style statistics for any fish in the game.  Based on static data from
 
 ![Demo of /fishguide](screenshot3.png "fishguide")
 
+## `/weather`
+
+Weather forecasting inspired by the in-game Skywatcher. Based on static data from the game and known Eorzea time and weather calculations.
+
+**region**: String.  Required.  Parent region name, following the Skywatcher convention.
+
+![Demo of /weather](screenshot4.png "weather")
+
 
 
 *FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.

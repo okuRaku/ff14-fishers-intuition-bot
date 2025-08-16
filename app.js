@@ -12,6 +12,8 @@ const DATA = require('./data.js')
 const wait = require('util').promisify(setTimeout);
 
 const windows = require('./windows');
+const weather = require('./weather');
+const { getFruityGuideCandidates } = require('./guidehelper')
 const rareAlerts = require('./rare-alerts');
 const fishGuide = require('./fish-guide');
 
@@ -27,8 +29,10 @@ const toTitleCase = (phrase) => {
         .join(' ');
 };
 
+
+
 const getFishId = (fishString, guide) => {
-    const fuse = new Fuse(Object.keys(guide).map(key => {
+    const dictionary = Object.keys(guide).map(key => {
         return {
             name: guide[key].name.en,
             nameja: guide[key].name.ja,
@@ -36,14 +40,22 @@ const getFishId = (fishString, guide) => {
             namede: guide[key].name.de,
             id: key
         }
-    }), {keys:['name', 'nameja', 'namefr', 'namede']})
+    })
+    let fuse = new Fuse(dictionary, {
+        keys: ['name', 'nameja', 'namefr', 'namede'],
+    })
     return fuse.search(fishString)[0].item.id
+}
+
+const hasFruityGuide = async (fishId) => {
+    await fishGuide.populateAllaganReportsData(fishId, cachedFishGuides)
+    return (cachedFishGuides[fishId] && cachedFishGuides[fishId].fruityVideo)
 }
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.once(Events.ClientReady, c => {
     console.log('Ready!');
-    });
+});
 
 // Following is a background process, designed to check periodically whether a small set of the rarest fish are coming up soon, and message a configured channel if so
 // start processes for these three rarest fish for now
@@ -61,6 +73,7 @@ let cachedTCCollectibleRewards = {}
 let cachedTCReverseReduction = {}
 let cachedLodinnStats = {}
 let cachedSpotData = {}
+let cachedRegionWeatherRates = {}
 fishGuide.populateXivApiData().then(populated => cachedFishGuides = populated)
 fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/items.json')
     .then(response => response.json().then(json => {
@@ -81,7 +94,7 @@ fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging
                         fr: placesJson[spearfish.zoneId].fr,
                         de: placesJson[spearfish.zoneId].de,
                     }
-                    if(spearfish.itemId in cachedTCSpearfishingData) {
+                    if (spearfish.itemId in cachedTCSpearfishingData) {
                         cachedTCSpearfishingData[spearfish.itemId].push(f)
                     } else {
                         cachedTCSpearfishingData[spearfish.itemId] = [f]
@@ -100,14 +113,14 @@ fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging
         cachedTCReverseReduction = json
         console.log(`Cached ${Object.keys(cachedTCReverseReduction).length} reverse reduction data`)
     }))
-    
+
 fetch('https://lodinn.github.io/assets/big_fish_stats_latest.json')
     .then(response => response.json().then(json => {
         cachedLodinnStats = json
         console.log(`Cached ${Object.keys(json).length} items from Lodinn's stats`)
     }))
 
-fetch('https://beta.xivapi.com/api/1/sheet/FishingSpot?limit=500&schema=exdschema@7.0&fields=PlaceName.Name@ja,PlaceName.Name@en,PlaceName.Name@fr,PlaceName.Name@de')
+fetch('https://v2.xivapi.com/api/sheet/FishingSpot?limit=500&fields=PlaceName.Name@ja,PlaceName.Name@en,PlaceName.Name@fr,PlaceName.Name@de,TerritoryType.PlaceName.value')
     .then(response => response.json().then(xivSpotJson => {
         fetch('https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/fishing-spots.json')
             .then(response => response.json().then(json => {
@@ -115,7 +128,7 @@ fetch('https://beta.xivapi.com/api/1/sheet/FishingSpot?limit=500&schema=exdschem
                     const xivSpot = xivSpotJson.rows.find(s => s.row_id === spot.id)
                     let x = undefined
                     let y = undefined
-                    if(spot.coords) {
+                    if (spot.coords) {
                         x = spot.coords.x
                         y = spot.coords.y
                         x = +x.toFixed(1)
@@ -127,20 +140,76 @@ fetch('https://beta.xivapi.com/api/1/sheet/FishingSpot?limit=500&schema=exdschem
                         en: xivSpot.fields.PlaceName.fields["Name@en"],
                         ja: xivSpot.fields.PlaceName.fields["Name@ja"],
                         fr: xivSpot.fields.PlaceName.fields["Name@fr"],
-                        de: xivSpot.fields.PlaceName.fields["Name@de"]
+                        de: xivSpot.fields.PlaceName.fields["Name@de"],
+                        zone: xivSpot.fields.TerritoryType?.fields?.PlaceName.value
                     }
                 })
                 console.log(`Cached ${Object.keys(cachedSpotData).length} fishing spots`)
             }))
     }))
 
+fetch('https://v2.xivapi.com/api/search?sheets=TerritoryType&query=WeatherRate.Rate[0]%3C100&fields=WeatherRate.Rate,WeatherRate.Weather[].Name@en,PlaceName.Name@ja,PlaceName.Name@en,PlaceName.Name@fr,PlaceName.Name@de,PlaceNameRegion.Name@en,PlaceNameRegion.Name@de,PlaceNameRegion.Name@fr,PlaceNameRegion.Name@ja&limit=500')
+    .then(response => response.json().then(xivTerritoryJson => {
+        const seenWeatherRates = new Set();
+        xivTerritoryJson["results"].map(territory => {
+
+            const weatherRateCode = territory.fields.WeatherRate.value;
+
+            // Skip if we've already stored this weather rate
+            if (seenWeatherRates.has(weatherRateCode)) return;
+            seenWeatherRates.add(weatherRateCode);
+
+            const regionNameEn = territory.fields.PlaceNameRegion.fields["Name@en"];
+
+            cachedRegionWeatherRates[regionNameEn] = {
+                [territory.fields.PlaceName.fields["Name@en"]]: {
+                    id: territory.fields.PlaceName.value,
+                    placename: {
+                        en: territory.fields.PlaceName.fields["Name@en"],
+                        ja: territory.fields.PlaceName.fields["Name@ja"],
+                        fr: territory.fields.PlaceName.fields["Name@fr"],
+                        de: territory.fields.PlaceName.fields["Name@de"]
+                    },
+                    regionname: {
+                        en: territory.fields.PlaceNameRegion.fields["Name@en"],
+                        ja: territory.fields.PlaceNameRegion.fields["Name@ja"],
+                        fr: territory.fields.PlaceNameRegion.fields["Name@fr"],
+                        de: territory.fields.PlaceNameRegion.fields["Name@de"]
+                    },
+                    rates: territory.fields.WeatherRate.fields["Rate"],
+                    weathers: territory.fields.WeatherRate.fields["Weather"].map(w => w.value)
+                },
+                ...cachedRegionWeatherRates[regionNameEn]
+            }
+        })
+        console.log(`Cached ${Object.keys(cachedRegionWeatherRates).length} regions weather rates`)
+    }))
+
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isButton()) return;
-
     if (interaction.customId === 'cancel') {
         await interaction.deferUpdate();
         await interaction.editReply({ content: '`Cancelled.`', components: [] });
+    }
+
+    if (interaction.customId.startsWith('fruityguide-')) {
+        await interaction.deferUpdate();
+
+        const fishId = interaction.customId.slice(12);
+        if (cachedFishGuides[fishId].fruityVideo) {
+            await interaction.editReply({ content: 'Posting the link...', components: [] });
+            await interaction.followUp({ content: cachedFishGuides[fishId].fruityVideo })
+        } else {
+            await interaction.editReply({
+                content: 'Sorry, but something went wrong trying' +
+                    ' to guess which Fruity Guide to share... would you mind' +
+                    ' using `/fishguide` with the `fruity_guide` option set to `True`?' +
+                    ' May also need to double check the Allagan Report has the URL.',
+                components: []
+            });
+
+        }
     }
 })
 
@@ -267,6 +336,70 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+client.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isMessageContextMenuCommand()) return;
+    const { commandName } = interaction;
+    if (commandName === 'Fruity Guide') {
+        await interaction.deferReply({ ephemeral: true });
+        const sentence = interaction.targetMessage.content;
+        if (sentence.length > 250) {
+            interaction.editReply({
+                content: 'Sorry, but this function really does not work well' +
+                ' with long message contents... would you mind' +
+                ' using `/fishguide` with the `fruity_guide` option set to `True`?'
+            })
+            return
+        }
+        // const locale = (() => { // unused currently, sadly
+        //     switch (interaction.locale) {
+        //         case 'en-GB': return "en";
+        //         case 'en-US': return "en";
+        //         case 'ja': return "ja";
+        //         case 'de': return "de";
+        //         case 'fr': return "fr";
+        //         default: return "en";
+        //     }
+        // })();
+        try {
+            const guideCandidates = (await Promise.all(
+                getFruityGuideCandidates(sentence, cachedFishGuides, 7).map(async fish => ({
+                    fish,
+                    url: await hasFruityGuide(fish.id)
+                }))
+            ))
+                .filter(x => x.url)
+                .slice(0, 5);
+
+            const buttonRow = new ActionRowBuilder()
+            guideCandidates.forEach((c) => {
+                buttonRow.addComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`fruityguide-${c.fish.id}`)
+                        .setLabel(c.fish.name)
+                        .setStyle(ButtonStyle.Secondary)
+                )
+            })
+
+            // .addComponents(
+            //     new ButtonBuilder()
+            //         .setCustomId('cancel')
+            //         .setLabel('Cancel')
+            //         .setStyle(ButtonStyle.Secondary),
+            // )
+
+            await interaction.editReply({ content: `I think I found a guide for the message... is it one of these?`, components: [buttonRow] })
+        } catch (e) {
+            console.log(e)
+            await interaction.editReply({
+                content: 'Sorry, but something went wrong trying' +
+                    ' to guess which Fruity Guide to share... would you mind' +
+                    ' using `/fishguide` with the `fruity_guide` option set to `True`?' +
+                    ' May also need to double check the Allagan Report has the URL.',
+            });
+        }
+    }
+});
+
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
@@ -309,6 +442,14 @@ client.on('interactionCreate', async interaction => {
 
         const embed = await windows.buildEmbed(fish, numWindows, displayDowntime, compactMode, displayDuration)
 
+        interaction.editReply({
+            embeds: [embed]
+        });
+    }
+
+    if (commandName === 'weather') {
+        await interaction.deferReply();
+        const embed = await weather.buildEmbed(interaction.options.getString('region'), cachedRegionWeatherRates)
         interaction.editReply({
             embeds: [embed]
         });
@@ -381,8 +522,8 @@ client.on('interactionCreate', async interaction => {
     if (commandName === 'fishguide') {
         await interaction.deferReply();
         const fish = interaction.options.getString('fish');
-        const locale = interaction.options.getString('language')? interaction.options.getString('language') :  (() => {
-            switch(interaction.locale) {
+        const locale = interaction.options.getString('language') ? interaction.options.getString('language') : (() => {
+            switch (interaction.locale) {
                 case 'en-GB': return "en";
                 case 'en-US': return "en";
                 case 'ja': return "ja";
@@ -390,25 +531,25 @@ client.on('interactionCreate', async interaction => {
                 case 'fr': return "fr";
                 default: return "en";
             }
-          })();
+        })();
         try {
             const fishId = getFishId(fish, cachedFishGuides, locale)
             await fishGuide.populateAllaganReportsData(fishId, cachedFishGuides)
 
-            if(interaction.options.getBoolean('fruity_guide')) {
+            if (interaction.options.getBoolean('fruity_guide')) {
                 await interaction.editReply({
                     content: cachedFishGuides[fishId].fruityVideo,
                 });
             } else {
                 const embed = await fishGuide.buildEmbed(
-                    fishId, locale, 
-                    cachedFishGuides, cachedTCItems, cachedLodinnStats, 
-                    cachedSpotData, cachedTCSpearfishingData, 
+                    fishId, locale,
+                    cachedFishGuides, cachedTCItems, cachedLodinnStats,
+                    cachedSpotData, cachedTCSpearfishingData,
                     cachedTCCollectibleRewards, cachedTCReverseReduction)
-                if(interaction.options.getBoolean('spoiler')) {
+                if (interaction.options.getBoolean('spoiler')) {
                     embed.setAuthor({
-                        name:`${embed.data.author.name}`.replace(/\).*/,')'),
-                        iconURL:embed.data.author.icon_url
+                        name: `${embed.data.author.name}`.replace(/\).*/, ')'),
+                        iconURL: embed.data.author.icon_url
                     })
                     embed.setDescription(`||${embed.data.description}||`)
                     embed.setFields(embed.data.fields.map(f => {
@@ -423,8 +564,8 @@ client.on('interactionCreate', async interaction => {
                     embeds: [embed]
                 });
             }
-            
-        } catch(e) {
+
+        } catch (e) {
             console.log(e)
             await interaction.editReply({ content: 'Encountered an error running `/fishguide`.  Please double check that the fish has data on Teamcraft.  If this message persists, it may be a problem with the backend.  Please @mention okuRaku#1417', components: [] });
         }

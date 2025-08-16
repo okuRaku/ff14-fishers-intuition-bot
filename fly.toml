@@ -7,7 +7,7 @@ primary_region = "sea"
 processes = []
 
 [build]
-  builder = "heroku/builder:20"
+  builder = "heroku/builder:22"
 
 [experimental]
   allowed_public_ports = []

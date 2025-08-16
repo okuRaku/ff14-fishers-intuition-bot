@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
+const { SlashCommandBuilder, ContextMenuCommandBuilder } = require('@discordjs/builders');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { clientId, guildId, token } = require('./config.json');
@@ -71,7 +71,7 @@ const commands = [
         .addStringOption(option => option.setName('except_ranks').setRequired(false).setDescription('Advanced: Give a comma separated list of ranks to exclude from the plot, e.g. 2,3')),
     new SlashCommandBuilder().setName('fishguide')
         .setDescription(
-            '(BETA) Fish details collected from in-game data as well as player recording and analysis.')
+            'Fish details collected from in-game data as well as player recording and analysis.')
         .addStringOption(option => option.setName('fish').setRequired(true).setDescription('Desired fish. Has some flexiblity but try to match the name closely.'))
         .addStringOption(option => option.setName('language').setNameLocalizations({
             ja: '言語',
@@ -89,14 +89,47 @@ const commands = [
                 { name: 'German', value: 'de', name_localizations: { ja: 'ドイツ語', de: 'Deutsch', fr: 'Allemande' } },
             ))
         .addBooleanOption(option => option.setName('fruity_guide').setRequired(false).setDescription('In this optional mode, only the Fruity Snacks video guide will be retrieved.'))
-        .addBooleanOption(option => option.setName('spoiler').setRequired(false).setDescription('In this optional mode, text fields will be marked as spoilers'))
-
+        .addBooleanOption(option => option.setName('spoiler').setRequired(false).setDescription('In this optional mode, text fields will be marked as spoilers')),
+    new ContextMenuCommandBuilder().setName('Fruity Guide').setType(3),
+    new SlashCommandBuilder().setName('weather')
+        .setDescription(
+            '(BETA) Weather prediction, with highlights for rare transitions.')
+        .addStringOption(option => option.setName('region').setRequired(true).setDescription('Skywatcher region to predict.')
+            .addChoices(
+                { name: "La Noscea", value: "La Noscea"},
+                { name: "The Black Shroud", value: "The Black Shroud"},
+                { name: "Thanalan", value: "Thanalan"},
+                { name: "Ishgard and Surrounding Areas", value: "Ishgard and Surrounding Areas"},
+                { name: "Gyr Abania", value: "Gyr Abania"},
+                { name: "The Far East", value: "The Far East"},
+                { name: "Ilsabard", value: "Ilsabard"},
+                { name: "Tural", value: "Tural"},
+                { name: "Norvrandt", value: "Norvrandt"},
+                { name: "Others", value: "Others"},
+            ))
+        // .addStringOption(option => option.setName('language').setNameLocalizations({
+        //     ja: '言語',
+        //     de: 'sprache',
+        //     fr: 'langue'
+        // }).setRequired(false).setDescription('Optionally select language.').setDescriptionLocalizations({
+        //     ja: '(任意)言語を強制的に設定する。',
+        //     de: 'Wählen Sie optional die Sprache aus.',
+        //     fr: 'Sélectionnez éventuellement la langue.'
+        // })
+        //     .addChoices(
+        //         { name: 'English', value: 'en', name_localizations: { ja: '英語', de: 'Englisch', fr: 'Anglais' } },
+        //         { name: 'Japanese', value: 'ja', name_localizations: { ja: '日本語', de: 'Japanisch', fr: 'Japonaise' } },
+        //         { name: 'French', value: 'fr', name_localizations: { ja: 'フランス語', de: 'Französisch', fr: 'Français' } },
+        //         { name: 'German', value: 'de', name_localizations: { ja: 'ドイツ語', de: 'Deutsch', fr: 'Allemande' } },
+        //     ))
+        // .addBooleanOption(option => option.setName('fruity_guide').setRequired(false).setDescription('In this optional mode, only the Fruity Snacks video guide will be retrieved.'))
+        // .add
 ]
     .map(command => command.toJSON());
 
 const rest = new REST({ version: '9' }).setToken(token);
 
 rest.put(Routes.applicationCommands(clientId), { body: commands })
-    // rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
+// rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands })
     .then(() => console.log('Successfully registered application commands.'))
     .catch(console.error);
