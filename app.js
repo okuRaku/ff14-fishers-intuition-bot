@@ -380,13 +380,6 @@ client.on(Events.InteractionCreate, async interaction => {
                 )
             })
 
-            // .addComponents(
-            //     new ButtonBuilder()
-            //         .setCustomId('cancel')
-            //         .setLabel('Cancel')
-            //         .setStyle(ButtonStyle.Secondary),
-            // )
-
             await interaction.editReply({ content: `I think I found a guide for the message... is it one of these?`, components: [buttonRow] })
         } catch (e) {
             console.log(e)

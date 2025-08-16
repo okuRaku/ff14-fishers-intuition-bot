@@ -52,14 +52,6 @@ const getFruityGuideCandidates = (sentence, guide, maxCandidates = 10) => {
     // Collect all matches with scores
     const scoredMatches = [];
 
-    // for (const fish of dictionary) {
-    //     for (const char of fish.name) {
-    //         if (char < ' ' || char > '~') {  // anything outside printable ASCII
-    //             console.log(`Non-printable or special char found in "${fish.name}": char code ${char.charCodeAt(0)}`);
-    //         }
-    //     }
-    // }
-
     for (const word of words) {
         if (word.length < 3 || stopwords.has(word)) continue;
 
