@@ -53,6 +53,11 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
         2: "<:weak_bite:1079108260738633798>"
     }
 
+    const lureEmotes = {
+        a: "<:AmbitiousLure:1259122677558546542>",
+        m: "<:ModestLure:1259122694855852095>"
+    } 
+
     const shadowSizes = {
         0: 'Small',
         1: 'Medium',
@@ -116,7 +121,7 @@ const populateAllaganReportsData = async (fishId, fishGuide, targetSpot) => {
             })
             fishGuide[fishId] = {
                 tug: tugEmotes[targetReport.data.tug],
-                hookset: hooksetEmotes[targetReport.data.hookset],
+                hookset: `${hooksetEmotes[targetReport.data.hookset]}${Array.from({ length: targetReport.data.mLure }, () => lureEmotes.m ).join("")}${Array.from({ length: targetReport.data.aLure }, () => lureEmotes.a ).join("")}`,
                 bait: targetReport.data.bait,
                 spots: spots,
                 spawn: targetReport.data.spawn,
