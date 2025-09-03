@@ -35,13 +35,13 @@ const commands = [
     new SlashCommandBuilder().setName('windows')
         .setDescription(
             'Get upcoming windows for a fish.  Based on FFX|V Fish Tracker App')
-        .addStringOption(option => option.setName('fish').setRequired(true).setDescription('Desired fish, any language.'))
-        .addIntegerOption(option => option.setName('number_of_windows').setRequired(false).setDescription('How many upcoming windows to show.  Minimum 1, maximum 10.  Default 5.'))
+        .addStringOption(option => option.setName('fish').setRequired(true).setDescription('Desired fish, any language.').setAutocomplete(true))
+        .addIntegerOption(option => option.setName('number_of_windows').setRequired(false).setDescription('How many upcoming windows to show.  Minimum 1, maximum 20.  Default 5.'))
         .addBooleanOption(option => option.setName('display_duration').setRequired(false).setDescription('Display window durations, useful on fish where it can vary.  Default false.'))
-        .addBooleanOption(option => option.setName('display_downtime').setRequired(false).setDescription('Display downtime between windows, varies due to weather randomness.  Default true.'))
-        .addBooleanOption(option => option.setName('compact_mode').setRequired(false).setDescription('Compact view more suitable for mobile.  Default true.')),
+        .addBooleanOption(option => option.setName('display_downtime').setRequired(false).setDescription('Display downtime between windows, varies due to weather randomness.  Default true.')),
     new SlashCommandBuilder().setName('bitetimes')
-        .setDescription('Bite timings for a spot.  Run without parameters (a menu will appear).  Based on FFXIV Teamcraft')
+        .setDescription('Bite timings for a spot.  Data from FFXIV Teamcraft.  Box plot by default, optionally histogram')
+        .addStringOption(option => option.setName('spot').setRequired(true).setDescription('Fishing spot.').setAutocomplete(true))
         .addStringOption(option => option.setName('plot_type').setRequired(false).setDescription('Optionally adjust plot type.')
             .addChoices(
                 { name: 'box', value: 'box' },
@@ -72,7 +72,7 @@ const commands = [
     new SlashCommandBuilder().setName('fishguide')
         .setDescription(
             'Fish details collected from in-game data as well as player recording and analysis.')
-        .addStringOption(option => option.setName('fish').setRequired(true).setDescription('Desired fish. Has some flexiblity but try to match the name closely.'))
+        .addStringOption(option => option.setName('fish').setRequired(true).setDescription('Desired fish. Has some flexiblity but try to match the name closely.').setAutocomplete(true))
         .addStringOption(option => option.setName('language').setNameLocalizations({
             ja: '言語',
             de: 'sprache',
@@ -93,8 +93,8 @@ const commands = [
     new ContextMenuCommandBuilder().setName('Fruity Guide').setType(3),
     new SlashCommandBuilder().setName('weather')
         .setDescription(
-            '(BETA) Weather prediction, with highlights for rare transitions.')
-        .addStringOption(option => option.setName('region').setRequired(true).setDescription('Skywatcher region to predict.')
+            '(BETA) Weather predictions + highlights for rare transitions, or rate visualization for comparison.')
+        .addStringOption(option => option.setName('region').setRequired(false).setDescription('Skywatcher region to predict. Ignored if zones are specified.')
             .addChoices(
                 { name: "La Noscea", value: "La Noscea" },
                 { name: "The Black Shroud", value: "The Black Shroud" },
@@ -107,6 +107,17 @@ const commands = [
                 { name: "Norvrandt", value: "Norvrandt" },
                 { name: "Others", value: "Others" },
             ))
+        .addStringOption(option => option.setName(`zone1`).setRequired(false).setDescription(`Optional zone 1 (shows weather rates for comparison instead of predictions)`).setAutocomplete(true))
+        .addStringOption(option => option.setName(`zone2`).setRequired(false).setDescription(`Optional zone 2 (shows weather rates for comparison instead of predictions)`).setAutocomplete(true))
+        .addStringOption(option => option.setName(`zone3`).setRequired(false).setDescription(`Optional zone 3 (shows weather rates for comparison instead of predictions)`).setAutocomplete(true))
+        .addStringOption(option => option.setName(`zone4`).setRequired(false).setDescription(`Optional zone 4 (shows weather rates for comparison instead of predictions)`).setAutocomplete(true))
+        .addStringOption(option => option.setName(`zone5`).setRequired(false).setDescription(`Optional zone 5 (shows weather rates for comparison instead of predictions)`).setAutocomplete(true))
+        .addStringOption(option => option.setName(`zone6`).setRequired(false).setDescription(`Optional zone 6 (shows weather rates for comparison instead of predictions)`).setAutocomplete(true)),
+    new SlashCommandBuilder().setName('biterates')
+        .setDescription(
+            '(BETA) Biterate info from lodinn.github.io. Hookset info: Allagan Reports. Data from FFXIV Teamcraft')
+        .addStringOption(option => option.setName('spot').setRequired(true).setDescription('Fishing spot.').setAutocomplete(true))
+
 ]
     .map(command => command.toJSON());
 

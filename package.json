@@ -5,10 +5,12 @@
   "dependencies": {
     "@discordjs/builders": "^1.11.3",
     "@discordjs/rest": "^1.7.1",
+    "@napi-rs/canvas": "^0.1.77",
     "@sapphire/shapeshift": "^4.0.0",
     "canvas": "^3.1.2",
     "discord-api-types": "^0.37.120",
     "discord.js": "^14.21.0",
+    "fast-average-color-node": "^3.1.0",
     "fuse.js": "^7.0.0",
     "i18n": "^0.15.1",
     "node-cron": "^3.0.0",
@@ -22,5 +24,8 @@
   },
   "engines": {
     "node": "22.x"
+  },
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10"
   }
 }
