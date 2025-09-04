@@ -93,9 +93,10 @@ const commands = [
     new ContextMenuCommandBuilder().setName('Fruity Guide').setType(3),
     new SlashCommandBuilder().setName('weather')
         .setDescription(
-            '(BETA) Weather predictions + highlights for rare transitions, or rate visualization for comparison.')
+            '(BETA) Weather predictions or rate visualization for comparison.')
         .addStringOption(option => option.setName('region').setRequired(false).setDescription('Skywatcher region to predict. Ignored if zones are specified.')
             .addChoices(
+                { name: "Cosmic Exploration", value: "Cosmic Exploration" },
                 { name: "La Noscea", value: "La Noscea" },
                 { name: "The Black Shroud", value: "The Black Shroud" },
                 { name: "Thanalan", value: "Thanalan" },

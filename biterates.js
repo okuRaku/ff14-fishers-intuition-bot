@@ -109,7 +109,6 @@ const renderSpot = async (locationId, cachedFishGuides) => {
         else if (tug === 2) color = "#EB786C"; //ambitious
         else {
             // tug === 3 → lookup hooksetRaw
-            console.log(`Resorting to allagan reports query for ${fishId}`)
             const result = await fishGuide.populateAllaganReportsData(
                 fishId,
                 cachedFishGuides

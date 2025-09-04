@@ -129,18 +129,47 @@ const rareFishBackgroundChecker = (fish, fishGuide, cachedRareWindows, channelId
                     return contents;
                 }
 
+                function collectLeafContents(components) {
+                    let contents = [];
+
+                    for (const comp of components) {
+                        // if it has child components, recurse
+                        if (comp.components && Array.isArray(comp.components) && comp.components.length > 0) {
+                            contents.push(...collectLeafContents(comp.components));
+                        }
+
+                        // grab content from either .content or .data.content
+                        const text = [comp.content, comp.data?.content]
+                            .filter(c => typeof c === "string" && c.trim() !== "")
+                            .map(c => c.trim())[0];
+
+                        if (text) contents.push(text);
+                    }
+
+                    return contents;
+                }
+
                 channel.messages.fetch({ limit: 20 }).then(messages => {
                     // make sure the embed wasn't already sent before proceeding
-                    const alertContents = collectLeafContents(alertMessage.components);
+                    function normalize(str) {
+                        return str
+                            .replace(/\s+/g, " ")             // collapse whitespace
+                            .replace(/<:[a-zA-Z0-9_]+:(\d+)?>/g, ":e:") // replace custom emoji
+                            .trim();
+                    }
+                    const alertContents = collectLeafContents(alertMessage.components).map(normalize);
+                    const shouldSend =
+                        messages.size === 0 ||
+                        // confirm not any messages fetched match exactly
+                        !Array.from(messages.values()).some(message => {
+                            if (!(message.components && message.components.length)) return false;
 
-                    const shouldSend = messages.size === 0 || messages.every(message => {
-                        if (!(message.components && message.components.length)) return true;
+                            const sentContents = collectLeafContents(message.components).map(normalize);
 
-                        const sentContents = collectLeafContents(message.components);
+                            // If ALL alert strings are present in this message → duplicate
+                            return alertContents.every(str => sentContents.includes(str));
+                        });
 
-                        // Compare all alert leaf strings; if any already exist, treat as duplicate
-                        return !alertContents.every(str => sentContents.includes(str));
-                    });
                     if (shouldSend) {
                         channel.send(alertMessage).then(sent_alert => {
                             if (channel.type === ChannelType.GuildAnnouncement && (diffMillis > intervalImminent)) {

@@ -224,7 +224,7 @@ client.on(Events.InteractionCreate, async interaction => {
     })();
     try {
         const keepTypingResponse = [{ name: { en: 'Keep typing...', ja: 'もう少し入力してください。', de: 'Tippen Sie noch etwas...', fr: 'Tapez encore un peu...' }[locale], value: 'nil', }]
-        const noMatchesResponse = [{ name: { en: 'Not finding anything... sorry!', ja: '何も見つかりませんでした。。。', de: 'Entschuldigung, nichts gefunden...', fr: 'Désolé, rien trouvé...' }[locale], value: 'nil', }]
+        // const noMatchesResponse = [{ name: { en: 'Not finding anything... sorry!', ja: '何も見つかりませんでした。。。', de: 'Entschuldigung, nichts gefunden...', fr: 'Désolé, rien trouvé...' }[locale], value: 'nil', }]
         let suggestions = []
         const userText = interaction.options.getFocused().toLowerCase()
         if (userText.length == 0) {
@@ -266,7 +266,9 @@ client.on(Events.InteractionCreate, async interaction => {
         if (suggestions.length > 24) {
             interaction.respond(keepTypingResponse)
         } else if (suggestions.length == 0) {
-            interaction.respond(noMatchesResponse)
+            // removing this because in the case that a "name" is mapped to a "value" like an id
+            // then I want the user to be able to copy that command and not get complained at
+            interaction.respond([]) //interaction.respond(noMatchesResponse)
         } else {
             interaction.respond(suggestions.map(([name, value]) => ({ name: name, value: value })))
         }
@@ -477,6 +479,8 @@ client.on('interactionCreate', async interaction => {
 
     const { commandName } = interaction;
 
+    console.log(`{"command": "${commandName}", "locale": "${interaction.locale}", "guildLocale": "${interaction.guildLocale}", "context": "${interaction.context}"}`)
+
     if (commandName === 'bitetimes') {
         const plotType = interaction.options.getString('plot_type');
         const spotId = interaction.options.getString('spot');
@@ -551,10 +555,18 @@ client.on('interactionCreate', async interaction => {
                 });
 
             } else {
-                const embed = await weather.buildEmbed(region, cachedRegionWeatherRates)
-                interaction.editReply({
-                    embeds: [embed]
-                });
+                if (region === "Cosmic Exploration") {
+                    const container = await weather.buildEmbed(region, cachedRegionWeatherRates)
+                    interaction.editReply({
+                        components: [container],
+                        flags: MessageFlags.IsComponentsV2
+                    });
+                } else {
+                    const embed = await weather.buildEmbed(region, cachedRegionWeatherRates)
+                    interaction.editReply({
+                        embeds: [embed]
+                    });
+                }
             }
 
         } catch (e) {
