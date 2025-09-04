@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ContainerBuilder, SectionBuilder } = require('discord.js');
 const DATA = require('./data.js')
 const EORZEA_MULTIPLIER = 3600 / 175;      // ≈ 20.571428571428573 ET per real hour
 const WEATHER_PERIOD_MS = 8 * 175000;      // 8 ET hours = 1,400,000 ms real (23m20s)
@@ -119,7 +119,7 @@ const renderWeatherRatesChart = async (zones, cachedRegionWeatherRates) => {
     return canvas;
 };
 
-function getDiscordTimestamps(count = 5) {
+function getAlignedTimestamps(count = 5) {
     const baseTimestamps = getNTimestamps(count);
 
     // find the true weather start >= now
@@ -131,8 +131,11 @@ function getDiscordTimestamps(count = 5) {
 
     // align by shifting base to match the true one
     const delta = trueNextStart - baseTimestamps[2]; // base[2] is "current"
-    const adjusted = baseTimestamps.map(ms => ms + delta);
+    return baseTimestamps.map(ms => ms + delta);
+}
 
+function getDiscordTimestamps(count = 5) {
+    const adjusted = getAlignedTimestamps(count);
     const stamps = adjusted.map(ms => `<t:${Math.floor(ms / 1000)}:t>`);
     return [stamps.shift(), "▲", stamps.shift(), ...stamps.map(s => `▶︎${s}`)].join("");
 }
@@ -251,8 +254,76 @@ const futureWeatherForRegion = (region, allRates) => {
     );
 };
 
+function buildCosmicExplorationContainer(zonesWithThumbs, cachedRegionWeatherRates) {
+    const findZoneByName = (name) => {
+        for (const regionMap of Object.values(cachedRegionWeatherRates || {})) {
+            for (const [key, z] of Object.entries(regionMap)) {
+                const label = z?.placename?.en || z?.placename || key;
+                if (label === name || key === name) return z;
+            }
+        }
+        return null;
+    };
+    const aligned = getAlignedTimestamps(21).slice(1); // drop the "previous" one
+    const container = new ContainerBuilder()
+        .setAccentColor(0x1FA1E0);
+
+    const legend = new Set();
+    Object.entries(zonesWithThumbs).forEach(([zoneName, thumbURL]) => {
+        const zone = findZoneByName(zoneName, cachedRegionWeatherRates);
+
+        // map timestamps to "<emoji> <timestamp:t>"
+        const lines = aligned.map(ms => {
+            const seconds = Math.floor(ms / 1000);
+            if (!zone) return `? <t:${seconds}:t>`;
+            const weatherId = pickWeather(ms, zone.rates, zone.weathers);
+            const weatherRaw = DATA.WEATHER[Math.abs(weatherId)] || "?";
+            legend.add(`${weatherRaw} ${weatherRaw.split(":")[1]?.replace(">", "") || "?"}`); // store emoji name
+            return `${weatherRaw} <t:${seconds}:t>`;
+        });
+
+        // build 2-column lines (max 20 lines)
+        const colLines = [];
+        for (let i = 0; i < 10; i++) {
+            const left = lines[i] || "";
+            const right = lines[i + 10] || "";
+            colLines.push(`${left}             ${right}`);
+        }
+
+        container.addSectionComponents(
+            section => section
+                .addTextDisplayComponents(
+                    textDisplay => textDisplay.setContent(`### <:emojiway:1413058634027630675> **${zoneName}**`),
+                    textDisplay => textDisplay.setContent(colLines.join("\n"))
+                )
+                .setThumbnailAccessory(
+                    thumbnail => thumbnail.setURL(thumbURL)
+                )
+        );
+    });
+
+    const legendArray = [...legend]
+
+    container.addSeparatorComponents(separator => separator).addTextDisplayComponents(
+        textDisplay => textDisplay.setContent(`-# ${legendArray.slice(0, legendArray.length/2).join("")}`),
+        textDisplay => textDisplay.setContent(`-# ${legendArray.slice(legendArray.length/2, legendArray.length).join("")}`)
+    );
+
+    return container;
+}
+
+
+
 module.exports = {
     buildEmbed: async (parentRegion, cachedRegionWeatherRates = undefined, authorTextPrefix = 'Upcoming windows for: ') => {
+        // Special case for Cosmic Exploration
+        if (parentRegion === "Cosmic Exploration") {
+            return buildCosmicExplorationContainer({
+                "Sinus Ardorum": "https://v2.xivapi.com/api/asset/ui/icon/070000/070881_hr1.tex?format=png",
+                "Phaenna": "https://v2.xivapi.com/api/asset/ui/icon/070000/070882_hr1.tex?format=png",
+            }, cachedRegionWeatherRates);
+        }
+
         const embed = new EmbedBuilder()
         const regions = (() => {
             switch (parentRegion) {
