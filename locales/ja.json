@@ -28,5 +28,6 @@
     "Incomplete data for": "データが現在不足",
     "ErrorMentionText": "誤りがあればどうぞ @mention okuRaku#1417をお願いします",
     "Scrip":"スクリップ",
-    "Reduction":"精選"
+    "Reduction":"精選",
+    "FishNotInLog":"この魚類はゲーム内の魚類図鑑には載っていないようです。実に残念ながらこれ以上の詳細は未知である。"
 }

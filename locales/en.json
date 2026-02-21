@@ -4,7 +4,7 @@
     "Prime Locations": "Prime Locations",
     "Min Gathering": "Min Gathering",
     "Intuition Requirements": "Intuition Requirements",
-    "Mooch Details": "Mooch Details",
+    "Mooch Details": "Mooch Sequence",
     "Bait":"Bait",
     "Tug":"Tug",
     "Speed":"Speed",
@@ -28,5 +28,6 @@
     "Incomplete data for": "Incomplete data for",
     "ErrorMentionText": "If you believe this may be in error, please @mention okuRaku#1417",
     "Scrip":"Scrip",
-    "Reduction":"Reduction"
+    "Reduction":"Reduction",
+    "FishNotInLog":"This fish apparently does not appear in the in-game Fish Guide. Therefore, sadly, no other details are available."
 }
