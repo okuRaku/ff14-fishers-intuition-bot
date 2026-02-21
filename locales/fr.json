@@ -28,5 +28,6 @@
     "Incomplete data for": "Données incomplètes pour",
     "ErrorMentionText": "Si vous pensez qu'il s'agit d'une erreur, veuillez mentionner @mention okuRaku#1417",
     "Scrip":"Assignat",
-    "Reduction": "Éthérolyse"
+    "Reduction": "Éthérolyse",
+    "FishNotInLog":"Ce poisson ne figure apparemment pas dans le Guide de pêche du jeu. Par conséquent, il est fort regrettable qu’aucun autre détail ne soit connu."
 }
