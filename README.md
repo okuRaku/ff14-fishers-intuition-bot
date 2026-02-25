@@ -4,7 +4,6 @@ This Discord bot acts as a front end to other apps (publishing Soon&trade;), pro
 ## `/windows`
 
 On a server that the commands have been registered and the bot added, start by simply typing `/windows`.  Five parameters are currently offered, though only fish is required.
-Server component borrows heavily from [FFX|V Fish Tracker App](https://github.com/icykoneko/ff14-fish-tracker-app).
 
 **fish**: String.  Required.  Desired fish, any language.
 ```
@@ -42,9 +41,9 @@ Server component borrows heavily from [FFX|V Fish Tracker App](https://github.co
 
 ## `/bitetimes`
 
-This command does not require any parameters, instead displaying a selection menu to the user.  Server component pulls data from [FFXIV Teamcraft](https://github.com/ffxiv-teamcraft/ffxiv-teamcraft) to generate charts of bite times of fish by fishing spot.  Optionally, plotType can be specified if desired.
+Server component pulls data from [FFXIV Teamcraft](https://github.com/ffxiv-teamcraft/ffxiv-teamcraft) to generate charts of bite times of fish by fishing spot.  Optionally, plotType can be specified if desired.
 
-![Demo of /bitetimes](bitetimes.gif "Bitetimes")
+![Demo of /bitetimes](screenshot5.png "Bitetimes")
 
 ## `/timeline`
 
@@ -76,6 +75,14 @@ Weather forecasting inspired by the in-game Skywatcher. Based on static data fro
 **region**: String.  Required.  Parent region name, following the Skywatcher convention.
 
 ![Demo of /weather](screenshot4.png "weather")
+
+## `/biterates`
+
+Bite rates per bait table with statistics and presentation inspired by [lodinn.github.io](lodinn.github.io)
+
+**spot**: String.  Required.  Fishing spot.
+
+![Demo of /weather](screenshot6.png "weather")
 
 
 
