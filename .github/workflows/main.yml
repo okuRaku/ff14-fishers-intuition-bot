@@ -1,0 +1,13 @@
+name: Trigger alert checks
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the URL
+        run: curl -X POST "https://ff14-fish-tracker-bot.fly.dev/trigger-checks"
