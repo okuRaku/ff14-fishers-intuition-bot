@@ -2,9 +2,7 @@ name: Trigger alert checks
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:
-
+    - cron: '*/5 * * * *'
 jobs:
   ping:
     runs-on: ubuntu-latest
