@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping the URL
-        run: curl -X https://ff14-fish-tracker-bot.fly.dev/trigger-checks
+        run: curl -X POST https://ff14-fish-tracker-bot.fly.dev/trigger-checks
